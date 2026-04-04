@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Garmin: Build (.prg)",
+      "type": "shell",
+      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -o bin/BabyRoutine.prg -d ${config:garmin.deviceId}",
+      "windows": {
+        "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -o bin/BabyRoutine.prg -d ${config:garmin.deviceId}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Garmin: Run in Simulator",
+      "type": "shell",
+      "dependsOn": "Garmin: Build (.prg)",
+      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeydo\" bin/BabyRoutine.prg ${config:garmin.deviceId}",
+      "windows": {
+        "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeydo.bat\" bin/BabyRoutine.prg ${config:garmin.deviceId}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Garmin: Package (.iq, signed)",
+      "type": "shell",
+      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\"",
+      "windows": {
+        "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\""
+      },
+      "problemMatcher": []
+    }
+  ]
+}

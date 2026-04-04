@@ -1,0 +1,21 @@
+{
+  // Absolute path to your Connect IQ SDK root directory.
+  // Example macOS: /Users/you/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-<version>
+  // Example Windows: C:\\Users\\you\\AppData\\Roaming\\Garmin\\ConnectIQ\\Sdks\\connectiq-sdk-win-<version>
+  // Example Linux: /home/you/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin-<version>
+  "garmin.connectIqSdkPath": "__SET_ME_CONNECTIQ_SDK_PATH__",
+
+  // Must be a product id available in your SDK.
+  "garmin.deviceId": "fenix8solar51mm",
+
+  // Path to your developer key used for signed package exports.
+  // Create one with:
+  // java -jar "<CONNECTIQ_SDK_PATH>/bin/monkeybrains.jar" -o "<path/to/developer_key.der>"
+  "garmin.developerKeyPath": "__SET_ME_DEVELOPER_KEY_PATH__",
+
+  // Optional: make file nesting cleaner in Explorer.
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "manifest.xml": "monkey.jungle, README.md"
+  }
+}

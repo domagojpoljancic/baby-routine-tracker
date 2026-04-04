@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Cursor/VS Code reliable option: launch simulator via task.
+      // This is a "run" launcher, not full Monkey C step-debugging.
+      "name": "Garmin: Launch Simulator",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "workbench.action.tasks.runTask Garmin: Run in Simulator"
+    }
+  ]
+}
