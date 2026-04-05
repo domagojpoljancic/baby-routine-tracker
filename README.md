@@ -16,8 +16,8 @@ Garmin Connect IQ watch app for baby tracking on the wrist. **Current focus: fee
 - **Storage / persistence** of feeding entries via `Application.Storage` (`FeedingStore`); entries use type codes and timestamps.
 - **Active / latest feeding** highlighted in the main row with formatter-driven text and elapsed-style display.
 - **Recent history rows** on the home screen (lower section) when enough entries exist.
-- **Custom menu** (upper-right affordance + `CustomMenuView` / `CustomMenuDelegate`): list-style UI with selection and back behavior.
-- **Menu open / close** via physical buttons and hotspot; consistent with the circular nav delegate.
+- **Custom menu** (upper-right affordance + `CustomMenuView` / `CustomMenuDelegate`): list-style UI with selection and back behavior (`BehaviorDelegate`: up/down scroll, select, back; swipe right also backs out of the menu on supported devices).
+- **Menu open / close** via physical buttons (`KEY_ENTER` / `onMenu`) and hotspot tap where available; stack uses `CircularNavDelegate` on the home screen.
 - **Start** submenu: **Left / Right / Bottle** feeding actions wired to the same pipeline as touch (`FeedingActions`).
 - **Physical button navigation** in the menu (up/down, select, back) per `BehaviorDelegate` mapping.
 - **Touch** on menu rows where supported (`CustomMenuDelegate.onTap` + row hit testing).
@@ -39,9 +39,9 @@ Garmin Connect IQ watch app for baby tracking on the wrist. **Current focus: fee
 
 - **History screen:** crashes or unstable; treat as **broken** until a proper fix lands.
 - **Work in progress:** APIs, UX, and storage usage may change.
-- **Placeholder menu items:** e.g. Settings, About (and similar) may only dismiss the menu or do nothing useful.
+- **Menu items:** **History** is wired but the screen is broken (see above). **Settings** and **About** are placeholders — selecting them typically just closes the menu.
 - **Simulator vs device:** behavior should be validated on real hardware; CIQ simulator can differ.
-- **Temporary debug logging:** `System.println` calls remain in the custom menu delegate and History-related code for troubleshooting — remove or gate before a release build.
+- **Temporary debug logging:** `System.println` remains in `CustomMenuDelegate.mc`, `history/HistoryView.mc`, and `menu/BabyRoutineMenu2InputDelegate.mc` (the last is not used by the main app flow) — remove or gate before a release build.
 
 ---
 
@@ -75,7 +75,7 @@ From the project root:
 mkdir -p bin
 "/Users/domagoj.poljancic/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.1.0-2026-03-09-6a872a80b/bin/monkeyc" \
   -f monkey.jungle \
-  -o bin/HelloGarmin.prg \
+  -o bin/BabyRoutine.prg \
   -d fenix8solar51mm \
   -y keys/developer_key.der
 ```
@@ -87,7 +87,7 @@ mkdir -p bin
 "$CONNECTIQ_SDK_PATH/bin/monkeyc" -f monkey.jungle -o bin/BabyRoutine.prg -d fenix8solar51mm
 ```
 
-(`manifest.xml` targets `fenix8solar51mm`; align `-d` with your device.)
+Use the **same** `-o` output path for `monkeydo` below. `manifest.xml` lists `fenix8solar51mm`; align `-d` with your device.
 
 ---
 
@@ -97,7 +97,7 @@ After a successful build:
 
 ```bash
 "/Users/domagoj.poljancic/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.1.0-2026-03-09-6a872a80b/bin/monkeydo" \
-  bin/HelloGarmin.prg fenix8solar51mm
+  bin/BabyRoutine.prg fenix8solar51mm
 ```
 
 Or use **Tasks → Garmin: Run in Simulator** if configured.
@@ -116,7 +116,7 @@ Or use **Tasks → Garmin: Run in Simulator** if configured.
 | Feeding actions (touch + menu) | `source/FeedingActions.mc` |
 | Menu UI | `source/CustomMenuView.mc`, `source/CustomMenuDelegate.mc`, `source/MenuHotspot.mc` |
 | History (broken WIP) | `source/history/*.mc` |
-| Extra menu scaffolding | `source/menu/` (e.g. `MainMenuBuilder.mc` — may be unused by main flow) |
+| Extra menu scaffolding | `source/menu/` — `MainMenuBuilder.mc` / `BabyRoutineMenu2InputDelegate.mc` are **not** referenced by the running app (custom menu uses `CustomMenuView` instead) |
 | Secondary screens | `source/SecondScreenView.mc`, `source/ThirdScreenView.mc` |
 | Manifest / resources | `manifest.xml`, `resources/` |
 
