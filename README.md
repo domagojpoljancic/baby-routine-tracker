@@ -11,7 +11,8 @@ Garmin Connect IQ watch app for baby tracking on the wrist. **Current focus: fee
 ## Current working features
 
 - **Main feeding screen** with three circles **L / B / R** (Left, Bottle, Right) and time row.
-- **Touch input** on the main feeding circles (`FeedingTouchLayout` + `HelloGarminView`).
+- **Touch input** on the main feeding circles on touch-capable devices (`FeedingTouchLayout` + `HelloGarminView`).
+- **Non-touch / button-only use:** open the **menu** (hardware **Enter** / **Menu** / hotspot where available), choose **Start**, then **Left**, **Right**, or **Bottle** with physical button navigation and select — same `FeedingActions` pipeline as circle taps.
 - **Storage / persistence** of feeding entries via `Application.Storage` (`FeedingStore`); entries use type codes and timestamps.
 - **Active / latest feeding** highlighted in the main row with formatter-driven text and elapsed-style display.
 - **Recent history rows** on the home screen (lower section) when enough entries exist.
@@ -30,7 +31,6 @@ Garmin Connect IQ watch app for baby tracking on the wrist. **Current focus: fee
 - **Custom menu** visuals and behavior are still being refined.
 - **History** (menu → History): **currently broken / not finished** — the History screen can crash at runtime and is **not** production-ready. Do not rely on it until it is fixed and validated.
 - **Timer / blink / redraw:** home row timing and circle flash use animation-driven redraw; this may still need refinement for battery and correctness.
-- **Non-touch models:** feeding is touch-first; dedicated button paths for L/B/R on non-touch watches are **not** implemented yet.
 - **Additional baby metrics** and real content on screens 2–3: **placeholder** or missing.
 
 ---
@@ -127,9 +127,8 @@ Or use **Tasks → Garmin: Run in Simulator** if configured.
 1. **Fix History** properly (timestamp pipeline, `CustomMenu` + `Menu2InputDelegate`, crash on device/simulator).
 2. **Wire** stable History behavior and re-test menu → History → back.
 3. **Continue** Settings / About / other menu items as real features or hide them.
-4. **Non-touch** feeding input paths for compatible watches.
-5. **Next baby metrics** and real second/third screen content.
-6. **Cleanup** temporary `System.println` debug and any dead code paths before release.
+4. **Next baby metrics** and real second/third screen content.
+5. **Cleanup** temporary `System.println` debug and any dead code paths before release.
 
 ---
 
