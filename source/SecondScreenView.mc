@@ -11,7 +11,7 @@ class SecondScreenView extends WatchUi.View {
         _screenDots = new ScreenIndicator();
     }
 
-    function onUpdate(dc as Dc) as Void {
+    function onUpdate(dc) {
         var w = dc.getWidth();
         var h = dc.getHeight();
 
@@ -26,6 +26,8 @@ class SecondScreenView extends WatchUi.View {
             "Second Screen",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
+
+        (new MenuHotspot()).draw(dc);
 
         var highlightRowY = h * 58 / 100;
         _screenDots.draw(dc, w, h, _screenIndex, highlightRowY);

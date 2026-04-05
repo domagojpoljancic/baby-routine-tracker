@@ -46,14 +46,6 @@ class HelloGarminView extends WatchUi.View {
         var circleRadius = (screenWidth < screenHeight ? screenWidth : screenHeight) / 2;
         var entries = _store.load();
 
-        // TEMP DEBUG ONLY: persistence probe (remove when done verifying Application.Storage).
-        var persistLine = "PERSIST: 0";
-        if (entries != null && entries.size() > 0) {
-            var latest = entries[entries.size() - 1];
-            var latestTs = _fmt.entryTs(latest);
-            persistLine = "PERSIST: " + entries.size() + " | TS: " + (latestTs == null ? "?" : latestTs.toString());
-        }
-
         // High-contrast base.
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.fillRectangle(0, 0, screenWidth, screenHeight);
@@ -82,53 +74,43 @@ class HelloGarminView extends WatchUi.View {
             }
         }
 
-        _drawTopCircles(dc, screenWidth, screenHeight);
         _drawTime(dc, screenWidth, screenHeight);
+        _drawTopCircles(dc, screenWidth, screenHeight);
+        (new MenuHotspot()).draw(dc);
         _drawDivider(dc, screenWidth, screenHeight);
         _drawMiddleHighlightedRow(dc, mainCenterX, highlightRowY, highlightFont, mainHP[0], mainHP[1], mainHP[2]);
         _drawSecondDivider(dc, screenWidth, screenHeight);
         _drawLowerRows(dc, screenWidth, screenHeight, lowerTexts[0], lowerTexts[1]);
 
         _screenDots.draw(dc, screenWidth, screenHeight, _screenIndex, highlightRowY);
-
-        // TEMP DEBUG ONLY: persistence indicator (bottom-right).
-        dc.setColor(Graphics.COLOR_DK_GREEN, Graphics.COLOR_BLACK);
-        dc.drawText(
-            screenWidth * 96 / 100,
-            screenHeight * 96 / 100,
-            Graphics.FONT_XTINY,
-            persistLine,
-            Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
-        );
     }
 
     function _drawTopCircles(dc, screenWidth, screenHeight) {
-        var topY = screenHeight * 16 / 100;
-        var sideY = screenHeight * 25 / 100;
+        var rowY = screenHeight * 31 / 100;
         var circleRadius = screenWidth * 12 / 100;
-        var leftX = screenWidth * 24 / 100;
-        var topX = screenWidth / 2;
-        var rightX = screenWidth * 76 / 100;
+        var leftX = screenWidth * 20 / 100;
+        var bottleX = screenWidth * 46 / 100;
+        var rightX = screenWidth * 72 / 100;
 
         var fillL = _flashCircleCode == 1 ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY;
-        var fillT = _flashCircleCode == 3 ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY;
+        var fillB = _flashCircleCode == 3 ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY;
         var fillR = _flashCircleCode == 2 ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY;
 
         dc.setColor(fillL, Graphics.COLOR_BLACK);
-        dc.fillCircle(leftX, sideY, circleRadius);
-        dc.setColor(fillT, Graphics.COLOR_BLACK);
-        dc.fillCircle(topX, topY, circleRadius);
+        dc.fillCircle(leftX, rowY, circleRadius);
+        dc.setColor(fillB, Graphics.COLOR_BLACK);
+        dc.fillCircle(bottleX, rowY, circleRadius);
         dc.setColor(fillR, Graphics.COLOR_BLACK);
-        dc.fillCircle(rightX, sideY, circleRadius);
+        dc.fillCircle(rightX, rowY, circleRadius);
 
-        dc.setColor(Graphics.COLOR_RED, fillL);
-        dc.drawText(leftX, sideY, Graphics.FONT_LARGE, "L", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.setColor(Graphics.COLOR_DK_GREEN, fillL);
+        dc.drawText(leftX, rowY, Graphics.FONT_MEDIUM, "L", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        dc.setColor(Graphics.COLOR_BLUE, fillT);
-        dc.drawText(topX, topY, Graphics.FONT_LARGE, "B", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.setColor(Graphics.COLOR_DK_BLUE, fillB);
+        dc.drawText(bottleX, rowY, Graphics.FONT_MEDIUM, "B", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        dc.setColor(Graphics.COLOR_RED, fillR);
-        dc.drawText(rightX, sideY, Graphics.FONT_LARGE, "R", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.setColor(Graphics.COLOR_DK_GREEN, fillR);
+        dc.drawText(rightX, rowY, Graphics.FONT_MEDIUM, "R", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     function _drawTime(dc, screenWidth, screenHeight) {
@@ -140,8 +122,8 @@ class HelloGarminView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK);
         dc.drawText(
             screenWidth / 2,
-            screenHeight * 39 / 100,
-            Graphics.FONT_LARGE,
+            screenHeight * 8 / 100,
+            Graphics.FONT_MEDIUM,
             timeText,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );

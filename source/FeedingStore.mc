@@ -36,6 +36,17 @@ class FeedingStore {
         Application.Storage.setValue(STORAGE_KEY, list);
     }
 
+    function undoLast() {
+        var list = load();
+        if (list == null || list.size() == 0) {
+            return false;
+        }
+
+        var newList = list.slice(0, list.size() - 1);
+        Application.Storage.setValue(STORAGE_KEY, newList);
+        return true;
+    }
+
     function clearAll() {
         Application.Storage.setValue(STORAGE_KEY, []);
     }

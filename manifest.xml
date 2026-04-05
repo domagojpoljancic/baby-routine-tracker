@@ -10,7 +10,7 @@
         name="@Strings.AppName"
         launcherIcon="@Drawables.LauncherIcon"
         entry="HelloGarminApp"
-        minApiLevel="3.0.0">
+        minApiLevel="3.3.0">
 
         <iq:products>
             <!-- Keep this in sync with DEVICE_ID you use in tasks/settings -->

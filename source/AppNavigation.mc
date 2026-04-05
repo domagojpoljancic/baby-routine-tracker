@@ -3,13 +3,14 @@ import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
 // Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. Circular via push/pop stack.
-// Feeding input on screen 1: touch taps on L/B/R circles only (see onTap).
-class CircularNavDelegate extends WatchUi.InputDelegate {
+// Screen 1: menu hotspot first, then L/B/R circle taps (see onTap). Other screens: hotspot only.
+// Custom menu: onMenu, KEY_ENTER, hotspot tap — _pushScreenMenu(); KEY_ESC — popView (see reference MainDelegate).
+class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
 
     function initialize(screen) {
-        InputDelegate.initialize();
+        BehaviorDelegate.initialize();
         _screen = screen;
     }
 
@@ -27,15 +28,19 @@ class CircularNavDelegate extends WatchUi.InputDelegate {
     }
 
     function onTap(clickEvent) {
+        var c = clickEvent.getCoordinates();
+        var ds = System.getDeviceSettings();
+        var x = c[0];
+        var y = c[1];
+
+        if (new MenuHotspot().hitTest(x, y, ds.screenWidth, ds.screenHeight)) {
+            _pushScreenMenu();
+            return true;
+        }
+
         if (_screen != 1) {
             return false;
         }
-
-        var c = clickEvent.getCoordinates();
-        var ds = System.getDeviceSettings();
-
-        var x = c[0];
-        var y = c[1];
 
         var result = new FeedingTouchLayout().hitCircle(x, y, ds.screenWidth, ds.screenHeight);
 
@@ -43,17 +48,7 @@ class CircularNavDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
-        (new FeedingStore()).append(result);
-
-        var vu = WatchUi.getCurrentView();
-        if (vu != null) {
-            var top = vu[0];
-            if (top != null && top has :noteCircleFlash) {
-                top.noteCircleFlash(result);
-            }
-        }
-
-        WatchUi.requestUpdate();
+        (new FeedingActions()).completeCircleTap(result);
 
         return true;
     }
@@ -61,10 +56,13 @@ class CircularNavDelegate extends WatchUi.InputDelegate {
     function onKey(keyEvent) {
         var k = keyEvent.getKey();
 
-        // TEMP DEBUG ONLY: clear feeding history on home (KEY_MENU not used for navigation).
-        if (_screen == 1 && k == WatchUi.KEY_MENU) {
-            (new FeedingStore()).clearAll();
-            WatchUi.requestUpdate();
+        if (k == WatchUi.KEY_ENTER) {
+            _pushScreenMenu();
+            return true;
+        }
+
+        if (k == WatchUi.KEY_ESC) {
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             return true;
         }
 
@@ -78,6 +76,30 @@ class CircularNavDelegate extends WatchUi.InputDelegate {
         }
 
         return false;
+    }
+
+    function onMenu() {
+        _pushScreenMenu();
+        return true;
+    }
+
+    function _pushScreenMenu() {
+        var labels;
+        var symbols;
+
+        if (_screen == 1) {
+            labels = ["Undo last", "Start", "History", "Settings", "About"];
+            symbols = [:undoLast, :start, :history, :settings, :about];
+        } else if (_screen == 2) {
+            labels = ["Item 1", "Item 2"];
+            symbols = [:item1, :item2];
+        } else {
+            labels = ["Item 1", "Item 2"];
+            symbols = [:item1, :item2];
+        }
+
+        var mv = new CustomMenuView(_screen, labels, symbols, null);
+        WatchUi.pushView(mv, new CustomMenuDelegate(mv), WatchUi.SLIDE_IMMEDIATE);
     }
 
     function _goNext() {

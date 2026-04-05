@@ -68,14 +68,15 @@ class FeedingFormatters {
             return null;
         }
 
-        var tsStr = entry["ts"];
-        var tsSym = entry[:ts];
-
-        if (tsStr != null) {
-            return tsStr;
+        var raw = entry["ts"];
+        if (raw == null) {
+            raw = entry[:ts];
+        }
+        if (raw == null) {
+            return null;
         }
 
-        return tsSym;
+        return raw.toNumber();
     }
 
     function formatHmFromTs(ts) {
