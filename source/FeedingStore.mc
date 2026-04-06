@@ -3,7 +3,7 @@ import Toybox.Time;
 
 // Persistent, append-only feeding entry store backed by Application Storage.
 // Intended to be storage-safe even across builds: store only primitives and arrays/dictionaries.
-// entry["t"] is numeric: 1=Left, 2=Right, 3=Bottle.
+// entry["t"] is numeric: 1=Left, 2=Right, 3=Bottle, 4=Diaper.
 class FeedingStore {
 
     var STORAGE_KEY = "feedings_v1";
@@ -45,6 +45,63 @@ class FeedingStore {
         var newList = list.slice(0, list.size() - 1);
         Application.Storage.setValue(STORAGE_KEY, newList);
         return true;
+    }
+
+    function _entryTypeCode(entry) {
+        if (entry == null) {
+            return null;
+        }
+
+        var v = entry["t"];
+        if (v == null) {
+            v = entry[:t];
+        }
+        if (v == null) {
+            return null;
+        }
+
+        return v.toNumber();
+    }
+
+    // screen 1: remove newest t in {1,2,3}. screen 2: remove newest t==4. screen 3: no-op.
+    function undoLastForScreen(screen) {
+        var list = load();
+        if (list == null || list.size() == 0) {
+            return false;
+        }
+
+        if (screen == 3) {
+            return false;
+        }
+
+        var i;
+        for (i = list.size() - 1; i >= 0; i -= 1) {
+            var t = _entryTypeCode(list[i]);
+            if (t == null) {
+                continue;
+            }
+
+            var match = false;
+            if (screen == 1) {
+                match = (t == 1 || t == 2 || t == 3);
+            } else if (screen == 2) {
+                match = (t == 4);
+            }
+
+            if (match) {
+                var newList = [];
+                var k;
+                for (k = 0; k < list.size(); k += 1) {
+                    if (k != i) {
+                        newList.add(list[k]);
+                    }
+                }
+                Application.Storage.setValue(STORAGE_KEY, newList);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     function clearAll() {

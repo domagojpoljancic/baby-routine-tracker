@@ -54,7 +54,6 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
             return false;
         }
 
-        System.println("MENU touch row idx=" + idx);
         _view._selectedIndex = idx;
         _commitSelection();
         return true;
@@ -62,19 +61,22 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
 
     function _commitSelection() {
         var sym = _view._symbols[_view._selectedIndex];
-        System.println("MENU commit sym=" + sym);
 
         if (sym == :undoLast) {
-            System.println("MENU undo last selected");
-            var removed = (new FeedingStore()).undoLast();
-            System.println("MENU undo last removed=" + removed);
+            var scr = _view._screen;
+            (new FeedingStore()).undoLastForScreen(scr);
             _popOneLevel();
             WatchUi.requestUpdate();
             return;
         }
 
+        if (sym == :addDiaper) {
+            (new DiaperActions()).completeAddDiaper();
+            _popOneLevel();
+            return;
+        }
+
         if (sym == :start) {
-            System.println("SUBMENU open Start > Left|Right|Bottle");
             var sub = new CustomMenuView(
                 _view._screen,
                 ["Left", "Right", "Bottle"],
@@ -86,29 +88,32 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         }
 
         if (sym == :startLeft) {
-            System.println("SUBMENU pick Left -> feeding type 1");
             (new FeedingActions()).completeMenuFeeding(1);
             return;
         }
         if (sym == :startRight) {
-            System.println("SUBMENU pick Right -> feeding type 2");
             (new FeedingActions()).completeMenuFeeding(2);
             return;
         }
         if (sym == :startBottle) {
-            System.println("SUBMENU pick Bottle -> feeding type 3");
             (new FeedingActions()).completeMenuFeeding(3);
             return;
         }
 
         if (sym == :history) {
-            var list = (new FeedingStore()).load();
-            var n = 0;
-            if (list != null) {
-                n = list.size();
+            var scr = _view._screen;
+            var hm;
+            if (scr == 2) {
+                hm = HistoryView.build(:diaperOnly);
+            } else {
+                hm = HistoryView.build(:feedingOnly);
             }
-            System.println("HISTORY open entries=" + n);
-            var hm = HistoryView.build();
+            WatchUi.pushView(hm, new HistoryDelegate(), WatchUi.SLIDE_IMMEDIATE);
+            return;
+        }
+
+        if (sym == :historyAll) {
+            var hm = HistoryView.build(:all);
             WatchUi.pushView(hm, new HistoryDelegate(), WatchUi.SLIDE_IMMEDIATE);
             return;
         }

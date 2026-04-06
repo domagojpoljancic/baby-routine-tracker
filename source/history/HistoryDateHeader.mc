@@ -17,33 +17,36 @@ class HistoryDateHeader extends WatchUi.CustomMenuItem {
     function draw(dc) {
         var w = dc.getWidth();
         var h = dc.getHeight();
-        var y = 0;
-
-        if (!_firstHeader) {
-            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawLine(0, y, w, y);
-            y += 2;
-        }
+        var padX = w * 10 / 100;
 
         var moment = new Time.Moment(_ts);
         var info = Time.Gregorian.info(moment, Time.FORMAT_LONG);
-        var dateStr = info.day.toString() + "/" + info.month.toString() + "/" + info.year.toString();
+        var dateStr = info.day.toString() + " " + info.month.toString() + " " + info.year.toString();
 
-        var cy = y + dc.getFontHeight(Graphics.FONT_TINY) / 2;
+        var font = Graphics.FONT_XTINY;
+        var fh = dc.getFontHeight(font);
+
+        // Anchor date near bottom of row so the next entry row can sit tight (reduces dead space vs vertical centering).
+        var bottomPad = 3;
+        var cy = h - bottomPad - fh / 2;
+        if (cy < fh / 2 + 1) {
+            cy = fh / 2 + 1;
+        }
+
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             w / 2,
             cy,
-            Graphics.FONT_TINY,
+            font,
             dateStr,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        var lineY = h - 2;
-        if (lineY < 0) {
-            lineY = 0;
+        var lineY = cy + fh / 2 + 1;
+        if (lineY >= h) {
+            lineY = h - 1;
         }
-        dc.drawLine(w * 8 / 100, lineY, w * 92 / 100, lineY);
+        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(padX, lineY, w - padX, lineY);
     }
 }

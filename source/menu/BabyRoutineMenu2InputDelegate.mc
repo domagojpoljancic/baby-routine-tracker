@@ -1,4 +1,3 @@
-import Toybox.System;
 import Toybox.WatchUi;
 
 class BabyRoutineMenu2InputDelegate extends WatchUi.Menu2InputDelegate {
@@ -11,8 +10,6 @@ class BabyRoutineMenu2InputDelegate extends WatchUi.Menu2InputDelegate {
     }
 
     function onSelect(item) {
-        var id = item.getId();
-        System.println("MENU screen=" + _screen + " item=" + id);
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 }

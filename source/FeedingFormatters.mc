@@ -17,6 +17,9 @@ class FeedingFormatters {
         if (code == 3) {
             return "Bottle";
         }
+        if (code == 4) {
+            return "Diaper";
+        }
 
         if (code == "L" || code == :L) {
             return "Left";
@@ -77,6 +80,57 @@ class FeedingFormatters {
         }
 
         return raw.toNumber();
+    }
+
+    function isFeedingTypeCode(code) {
+        if (code == null) {
+            return false;
+        }
+
+        var n = code.toNumber();
+        return n == 1 || n == 2 || n == 3;
+    }
+
+    function filterFeedingEntries(list) {
+        if (list == null) {
+            return [];
+        }
+
+        var out = [];
+        var i;
+        for (i = 0; i < list.size(); i += 1) {
+            var e = list[i];
+            if (isFeedingTypeCode(entryType(e))) {
+                out.add(e);
+            }
+        }
+
+        return out;
+    }
+
+    function isDiaperTypeCode(code) {
+        if (code == null) {
+            return false;
+        }
+
+        return code.toNumber() == 4;
+    }
+
+    function filterDiaperEntries(list) {
+        if (list == null) {
+            return [];
+        }
+
+        var out = [];
+        var i;
+        for (i = 0; i < list.size(); i += 1) {
+            var e = list[i];
+            if (isDiaperTypeCode(entryType(e))) {
+                out.add(e);
+            }
+        }
+
+        return out;
     }
 
     function formatHmFromTs(ts) {

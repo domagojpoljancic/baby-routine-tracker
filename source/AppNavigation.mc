@@ -3,7 +3,7 @@ import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
 // Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. Circular via push/pop stack.
-// Screen 1: menu hotspot first, then L/B/R circle taps (see onTap). Other screens: hotspot only.
+// Screen 1: menu hotspot first, then L/B/R circle taps (see onTap). Screen 2: menu hotspot, then diaper button.
 // Custom menu: onMenu, KEY_ENTER, hotspot tap — _pushScreenMenu(); KEY_ESC — popView (see reference MainDelegate).
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
@@ -36,6 +36,14 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         if (new MenuHotspot().hitTest(x, y, ds.screenWidth, ds.screenHeight)) {
             _pushScreenMenu();
             return true;
+        }
+
+        if (_screen == 2) {
+            if (new DiaperTouchLayout().hitDiaperButton(x, y, ds.screenWidth, ds.screenHeight)) {
+                (new DiaperActions()).completeAddDiaper();
+                return true;
+            }
+            return false;
         }
 
         if (_screen != 1) {
@@ -88,17 +96,24 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         var symbols;
 
         if (_screen == 1) {
-            labels = ["Undo last", "Start", "History", "Settings", "About"];
-            symbols = [:undoLast, :start, :history, :settings, :about];
+            labels = ["Undo last", "Start", "History", "History(all)", "Settings", "About"];
+            symbols = [:undoLast, :start, :history, :historyAll, :settings, :about];
         } else if (_screen == 2) {
-            labels = ["Item 1", "Item 2"];
-            symbols = [:item1, :item2];
+            labels = ["Undo last", "Add diaper", "History", "History(all)", "Settings", "About"];
+            symbols = [:undoLast, :addDiaper, :history, :historyAll, :settings, :about];
         } else {
-            labels = ["Item 1", "Item 2"];
-            symbols = [:item1, :item2];
+            labels = ["Undo last", "Item 1", "Item 2"];
+            symbols = [:undoLast, :item1, :item2];
         }
 
-        var mv = new CustomMenuView(_screen, labels, symbols, null);
+        var menuTitle = null;
+        if (_screen == 1) {
+            menuTitle = "Feeding";
+        } else if (_screen == 2) {
+            menuTitle = "Diaper";
+        }
+
+        var mv = new CustomMenuView(_screen, labels, symbols, menuTitle);
         WatchUi.pushView(mv, new CustomMenuDelegate(mv), WatchUi.SLIDE_IMMEDIATE);
     }
 

@@ -10,7 +10,7 @@ class CustomMenuView extends WatchUi.View {
     var _selectedIndex;
     var _title;
 
-    // title: null uses default "Menu" (e.g. main menu); pass "Start" for Start submenu.
+    // title: null uses default "Menu"; screen 1 passes "Feeding"; Start submenu passes "Start".
     function initialize(screen, labels, symbols, title) {
         View.initialize();
         _screen = screen;

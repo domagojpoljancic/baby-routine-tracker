@@ -6,13 +6,17 @@ import Toybox.WatchUi;
 // Builds a scrollable CustomMenu of grouped feeding history (newest first).
 class HistoryView {
 
-    static function build() {
-        var menuHeight = 85;
+    // mode: :feedingOnly (default) = t in {1,2,3}; :diaperOnly = t==4; :all = no type filter.
+    static function build(mode) {
         var ds = System.getDeviceSettings();
+        var menuHeight;
         if (ds.screenHeight < 250) {
-            menuHeight = ds.screenHeight / 4;
+            menuHeight = ds.screenHeight * 15 / 100;
         } else {
-            menuHeight = ds.screenHeight / 5;
+            menuHeight = ds.screenHeight * 12 / 100;
+        }
+        if (menuHeight < 44) {
+            menuHeight = 44;
         }
 
         var menu = new WatchUi.CustomMenu(menuHeight, Graphics.COLOR_BLACK, {});
@@ -22,13 +26,27 @@ class HistoryView {
             feedings = [];
         }
 
-        var ordered = HistoryView._newestFirstOrder(feedings);
-        if (ordered.size() == 0) {
-            menu.addItem(new HistoryEmptyItem());
-            return menu;
+        if (mode == null) {
+            mode = :feedingOnly;
         }
 
-        System.println("HISTORY build start count=" + ordered.size());
+        if (mode == :all) {
+            // keep full list
+        } else if (mode == :diaperOnly) {
+            feedings = (new FeedingFormatters()).filterDiaperEntries(feedings);
+        } else if (mode == :feedingOnly) {
+            feedings = (new FeedingFormatters()).filterFeedingEntries(feedings);
+        }
+
+        var ordered = HistoryView._newestFirstOrder(feedings);
+        if (ordered.size() == 0) {
+            if (mode == :diaperOnly) {
+                menu.addItem(new HistoryEmptyItem("No diapers yet"));
+            } else {
+                menu.addItem(new HistoryEmptyItem(null));
+            }
+            return menu;
+        }
 
         var prevDayKey = -1;
         var fmt = new FeedingFormatters();
@@ -40,14 +58,11 @@ class HistoryView {
                 continue;
             }
 
-            System.println("HISTORY entry ts=" + normalizedTs);
-
             var dk = HistoryView._dayKey(normalizedTs);
             if (dk == null) {
                 continue;
             }
             if (dk != prevDayKey) {
-                System.println("HISTORY dayKey=" + dk);
                 menu.addItem(new HistoryDateHeader(normalizedTs, prevDayKey == -1));
                 prevDayKey = dk;
             }
@@ -69,46 +84,47 @@ class HistoryView {
     }
 
     static function _dayKey(ts) {
-
         if (ts == null) {
             return null;
         }
 
-        // HARD cast to Number using arithmetic (Monkey C safe pattern)
-        var n = ts + 0;
+        var moment = new Time.Moment(ts);
 
-        // Validate result
-        if (n == null) {
-            return null;
-        }
+        // IMPORTANT: FORMAT_SHORT ensures numeric month/day/year for arithmetic
+        var info = Time.Gregorian.info(moment, Time.FORMAT_SHORT);
 
-        System.println("HISTORY ts final=" + n);
+        var dk = info.year * 10000 + info.month * 100 + info.day;
 
-        var moment = new Time.Moment(n);
-        var info = Time.Gregorian.info(moment, Time.FORMAT_LONG);
-
-        return info.year * 10000 + info.month * 100 + info.day;
+        return dk;
     }
 }
 
 class HistoryEmptyItem extends WatchUi.CustomMenuItem {
 
-    function initialize() {
+    var _message;
+
+    function initialize(emptyMessage) {
         CustomMenuItem.initialize(null, {});
+        if (emptyMessage == null) {
+            _message = "No feedings yet";
+        } else {
+            _message = emptyMessage;
+        }
     }
 
     function draw(dc) {
         var w = dc.getWidth();
         var h = dc.getHeight();
-        var fh = dc.getFontHeight(Graphics.FONT_TINY) / 2;
+        var left = w * 10 / 100;
 
+        var fh = dc.getFontHeight(Graphics.FONT_SMALL);
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            w / 2,
-            h / 2 - fh,
-            Graphics.FONT_TINY,
-            "No feedings yet",
-            Graphics.TEXT_JUSTIFY_CENTER
+            left,
+            2 + fh / 2,
+            Graphics.FONT_SMALL,
+            _message,
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
 }

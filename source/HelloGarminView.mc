@@ -45,6 +45,7 @@ class HelloGarminView extends WatchUi.View {
         var centerY = screenHeight / 2;
         var circleRadius = (screenWidth < screenHeight ? screenWidth : screenHeight) / 2;
         var entries = _store.load();
+        entries = _fmt.filterFeedingEntries(entries);
 
         // High-contrast base.
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
