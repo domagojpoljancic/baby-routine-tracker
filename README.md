@@ -42,7 +42,9 @@ Navigation is **two screens** (swipe up/down / keys): **Feeding** ↔ **Diaper**
 
 ## Glance
 
-`HelloGarminApp.getGlanceView()` returns `BabyRoutineGlanceView` when `WatchUi has :GlanceView`. Shows **one line**: latest store entry as `time - Label`, or **No events**. Time formatting matches history (12h includes AM/PM).
+`HelloGarminApp.getGlanceView()` returns `BabyRoutineGlanceView` when `WatchUi has :GlanceView`. The glance runs in a **separate execution context** (no app classes): it reads `feedings_v1` from `Application.Storage` with the same entry shape as `FeedingStore` (`t`, `ts`).
+
+Layout: **title** `Baby Routine`, then the **newest** event as `time - Label`; when there is a second entry, the **previous** event is shown on a third line. Empty store: **No events** only under the title. Time formatting follows the device 12h/24h setting (12h includes AM/PM), consistent with history rows.
 
 ---
 
@@ -114,7 +116,7 @@ Java; [Connect IQ SDK](https://developer.garmin.com/connect-iq/overview/) (`monk
 
 ## Setup
 
-Set `CONNECTIQ_SDK_PATH` or use full paths. In VS Code/Cursor: `garmin.connectIqSdkPath`, `garmin.deviceId` (match `manifest.xml` `<iq:product>`). Copy a valid `developer_key.der` into `keys/` locally (that folder is gitignored).
+Set `CONNECTIQ_SDK_PATH` or use full paths. In VS Code/Cursor: `garmin.connectIqSdkPath`, `garmin.deviceId` (match `manifest.xml` `<iq:product>`). Copy a valid `developer_key.der` into `keys/` locally (that folder is gitignored). Products in `manifest.xml`: `fenix8solar51mm`, `venu3s`.
 
 ---
 
@@ -131,6 +133,13 @@ mkdir -p bin
   -o bin/BabyRoutine.prg \
   -d fenix8solar51mm \
   -y keys/developer_key.der
+```
+
+**Venu 3S** — same command with `-d venu3s` (and run that `.prg` on the matching simulator or device).
+
+```bash
+mkdir -p bin
+"$CONNECTIQ_SDK_PATH/bin/monkeyc" -f monkey.jungle -o bin/BabyRoutine.prg -d venu3s -y keys/developer_key.der
 ```
 
 Unsigned build (if your SDK allows):

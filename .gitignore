@@ -4,6 +4,7 @@ bin/*.iq
 bin/*.debug.xml
 bin/*.tmp
 bin/gen/
+bin/mir/
 bin/external-mir/
 bin/internal-mir/
 

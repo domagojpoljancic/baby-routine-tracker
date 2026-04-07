@@ -31,7 +31,7 @@ class HelloGarminView extends WatchUi.View {
         WatchUi.cancelAllAnimations();
     }
 
-    // Called from CircularNavDelegate after a successful L/R/B hit (same codes as hitCircle).
+    // Circle flash state (optional). Not invoked from current FeedingActions paths; kept for layout/animation hooks.
     function noteCircleFlash(circleCode) {
         _flashCircleCode = circleCode;
         _flashFramesRemaining = 6;
