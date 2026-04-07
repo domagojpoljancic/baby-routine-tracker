@@ -1,5 +1,4 @@
 import Toybox.Graphics;
-import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
@@ -115,19 +114,7 @@ class HelloGarminView extends WatchUi.View {
     }
 
     function _drawTime(dc, screenWidth, screenHeight) {
-        var t = System.getClockTime();
-        var hourText = (t.hour < 10 ? "0" : "") + t.hour.toString();
-        var minuteText = (t.min < 10 ? "0" : "") + t.min.toString();
-        var timeText = hourText + ":" + minuteText;
-
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK);
-        dc.drawText(
-            screenWidth / 2,
-            screenHeight * 8 / 100,
-            Graphics.FONT_MEDIUM,
-            timeText,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-        );
+        (new MainScreenTimeDisplay()).draw(dc, screenWidth, screenHeight);
     }
 
     function _drawDivider(dc, screenWidth, screenHeight) {
@@ -271,7 +258,7 @@ class HelloGarminView extends WatchUi.View {
         var timerUseWhite = (sec % 2) == 0;
 
         if (entries == null || entries.size() == 0) {
-            return ["Start - Tap L/R/B", "", timerUseWhite];
+            return ["Tap L/Bottle/R", "", timerUseWhite];
         }
 
         var latest = entries[entries.size() - 1];

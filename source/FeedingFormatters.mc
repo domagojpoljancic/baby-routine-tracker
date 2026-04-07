@@ -1,4 +1,5 @@
 import Toybox.Math;
+import Toybox.System;
 import Toybox.Time;
 
 class FeedingFormatters {
@@ -144,6 +145,45 @@ class FeedingFormatters {
         var hh = (info.hour < 10 ? "0" : "") + info.hour.toString();
         var mm = (info.min < 10 ? "0" : "") + info.min.toString();
         return hh + ":" + mm;
+    }
+
+    // History menu rows only: matches DeviceSettings.is24Hour (same rule as main-screen clock).
+    function formatHistoryRowTimeFromTs(ts) {
+        if (ts == null) {
+            return "??:??";
+        }
+
+        if (System.getDeviceSettings().is24Hour) {
+            return formatHmFromTs(ts);
+        }
+
+        var moment = new Time.Moment(ts);
+        var info = Time.Gregorian.info(moment, Time.FORMAT_SHORT);
+        var h24 = info.hour;
+        var mm = (info.min < 10 ? "0" : "") + info.min.toString();
+
+        var h12;
+        var suffix;
+        if (h24 == 0) {
+            h12 = 12;
+            suffix = " AM";
+        } else if (h24 < 12) {
+            h12 = h24;
+            suffix = " AM";
+        } else if (h24 == 12) {
+            h12 = 12;
+            suffix = " PM";
+        } else {
+            h12 = h24 - 12;
+            suffix = " PM";
+        }
+
+        return h12.toString() + ":" + mm + suffix;
+    }
+
+    // Glance + same display rule as History rows: time + type, respects is24Hour.
+    function formatGlanceEventLine(entry) {
+        return formatHistoryRowTimeFromTs(entryTs(entry)) + " - " + typeLabel(entryType(entry));
     }
 
     function formatHistoryLine(entry) {

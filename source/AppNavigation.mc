@@ -3,7 +3,7 @@ import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
 // Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. Circular via push/pop stack.
-// Screen 1: menu hotspot first, then L/B/R circle taps (see onTap). Screen 2: menu hotspot, then diaper button.
+// onTap order — screen 1: menu hotspot, L/B/R circles, bottom half → filtered History. Screen 2: menu, diaper button, bottom half → History.
 // Custom menu: onMenu, KEY_ENTER, hotspot tap — _pushScreenMenu(); KEY_ESC — popView (see reference MainDelegate).
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
@@ -38,27 +38,49 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
             return true;
         }
 
-        if (_screen == 2) {
-            if (new DiaperTouchLayout().hitDiaperButton(x, y, ds.screenWidth, ds.screenHeight)) {
-                (new DiaperActions()).completeAddDiaper();
+        var h = ds.screenHeight;
+
+        if (_screen == 1) {
+            var result = new FeedingTouchLayout().hitCircle(x, y, ds.screenWidth, h);
+            if (result != null) {
+                (new FeedingActions()).completeCircleTap(result);
+                return true;
+            }
+            if (_isBottomHalfTap(y, h)) {
+                _openScreenFilteredHistory();
                 return true;
             }
             return false;
         }
 
-        if (_screen != 1) {
+        if (_screen == 2) {
+            if (new DiaperTouchLayout().hitDiaperButton(x, y, ds.screenWidth, h)) {
+                (new DiaperActions()).completeAddDiaper();
+                return true;
+            }
+            if (_isBottomHalfTap(y, h)) {
+                _openScreenFilteredHistory();
+                return true;
+            }
             return false;
         }
 
-        var result = new FeedingTouchLayout().hitCircle(x, y, ds.screenWidth, ds.screenHeight);
+        return false;
+    }
 
-        if (result == null) {
-            return false;
+    // Same History modes as CustomMenuDelegate :history (not History(all)).
+    function _openScreenFilteredHistory() {
+        var hm;
+        if (_screen == 2) {
+            hm = HistoryView.build(:diaperOnly);
+        } else {
+            hm = HistoryView.build(:feedingOnly);
         }
+        WatchUi.pushView(hm, new HistoryDelegate(), WatchUi.SLIDE_IMMEDIATE);
+    }
 
-        (new FeedingActions()).completeCircleTap(result);
-
-        return true;
+    function _isBottomHalfTap(y, height) {
+        return y >= height / 2;
     }
 
     function onKey(keyEvent) {
@@ -121,7 +143,9 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         if (_screen == 1) {
             WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
         } else if (_screen == 2) {
-            WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
+            // TEMP: screen 3 disabled — two-screen wrap (restore ThirdScreenView push when re-enabling).
+            // WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -130,8 +154,9 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     function _goPrev() {
         if (_screen == 1) {
+            // TEMP: screen 3 disabled — only push screen 2 (restore ThirdScreenView push when re-enabling).
             WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
-            WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
+            // WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
         } else if (_screen == 2) {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else {

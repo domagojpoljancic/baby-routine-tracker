@@ -36,7 +36,8 @@ class ScreenIndicator {
         var stackYOffset = screenHeight * 65 / 1000;
 
         var i;
-        for (i = 1; i <= 3; i += 1) {
+        // TEMP: third dot disabled while screen 3 is out of flow — restore `i <= 3` when re-enabling.
+        for (i = 1; i <= 2; i += 1) {
             var y = highlightRowY + (i - 1) * spacing - stackYOffset;
             if (i == activeScreen) {
                 dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_BLACK);

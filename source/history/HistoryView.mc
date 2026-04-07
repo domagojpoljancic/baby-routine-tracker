@@ -42,6 +42,8 @@ class HistoryView {
         if (ordered.size() == 0) {
             if (mode == :diaperOnly) {
                 menu.addItem(new HistoryEmptyItem("No diapers yet"));
+            } else if (mode == :all) {
+                menu.addItem(new HistoryEmptyItem("No entries yet"));
             } else {
                 menu.addItem(new HistoryEmptyItem(null));
             }

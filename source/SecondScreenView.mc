@@ -1,5 +1,4 @@
 import Toybox.Graphics;
-import Toybox.System;
 import Toybox.WatchUi;
 
 // Screen 2: diaper tracking (shared store; t=4).
@@ -100,19 +99,7 @@ class SecondScreenView extends WatchUi.View {
     }
 
     function _drawTime(dc, screenWidth, screenHeight) {
-        var t = System.getClockTime();
-        var hourText = (t.hour < 10 ? "0" : "") + t.hour.toString();
-        var minuteText = (t.min < 10 ? "0" : "") + t.min.toString();
-        var timeText = hourText + ":" + minuteText;
-
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK);
-        dc.drawText(
-            screenWidth / 2,
-            screenHeight * 8 / 100,
-            Graphics.FONT_MEDIUM,
-            timeText,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-        );
+        (new MainScreenTimeDisplay()).draw(dc, screenWidth, screenHeight);
     }
 
     // Primary action button in the upper content band (same vertical band as screen 1 circles).

@@ -15,7 +15,7 @@ class HistoryItem extends WatchUi.CustomMenuItem {
 
     function draw(dc) {
         var fmt = new FeedingFormatters();
-        var line = fmt.formatHmFromTs(_normalizedTs) + " - " + fmt.typeLabel(fmt.entryType(_entry));
+        var line = fmt.formatHistoryRowTimeFromTs(_normalizedTs) + " - " + fmt.typeLabel(fmt.entryType(_entry));
         var w = dc.getWidth();
         var h = dc.getHeight();
         var left = w * 10 / 100;
