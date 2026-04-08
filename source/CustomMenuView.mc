@@ -8,6 +8,7 @@ class CustomMenuView extends WatchUi.View {
     var _labels;
     var _symbols;
     var _selectedIndex;
+    var _firstVisibleIndex;
     var _title;
 
     // title: null uses default "Menu"; screen 1 passes "Feeding"; Start submenu passes "Start".
@@ -17,6 +18,7 @@ class CustomMenuView extends WatchUi.View {
         _labels = labels;
         _symbols = symbols;
         _selectedIndex = 0;
+        _firstVisibleIndex = 0;
         if (title == null) {
             _title = "Menu";
         } else {
@@ -85,6 +87,67 @@ class CustomMenuView extends WatchUi.View {
         return _rowPitch(h) - h * 2 / 100;
     }
 
+    function _itemFont(h) {
+        // Slightly larger text on larger round displays (e.g., 390x390).
+        if (h >= 380) {
+            return Graphics.FONT_LARGE;
+        }
+        return Graphics.FONT_MEDIUM;
+    }
+
+    function _maxVisibleRows(h) {
+        var available = h - _firstRowTop(h);
+        var pitch = _rowPitch(h);
+        if (pitch <= 0) {
+            return 1;
+        }
+        var rows = available / pitch;
+        if (rows < 1) {
+            rows = 1;
+        }
+        return rows.toNumber();
+    }
+
+    function _visibleStart(n, h) {
+        var maxRows = _maxVisibleRows(h);
+        if (maxRows >= n) {
+            return 0;
+        }
+
+        var maxStart = n - maxRows;
+        if (_firstVisibleIndex < 0) {
+            _firstVisibleIndex = 0;
+        }
+        if (_firstVisibleIndex > maxStart) {
+            _firstVisibleIndex = maxStart;
+        }
+        return _firstVisibleIndex;
+    }
+
+    function ensureSelectionVisible(h) {
+        var n = _labels.size();
+        if (n <= 0) {
+            _firstVisibleIndex = 0;
+            return;
+        }
+        if (_selectedIndex < 0) {
+            _selectedIndex = 0;
+        }
+        if (_selectedIndex >= n) {
+            _selectedIndex = n - 1;
+        }
+
+        var maxRows = _maxVisibleRows(h);
+        var start = _visibleStart(n, h);
+        var endExclusive = start + maxRows;
+        if (_selectedIndex < start) {
+            _firstVisibleIndex = _selectedIndex;
+        } else if (_selectedIndex >= endExclusive) {
+            _firstVisibleIndex = _selectedIndex - maxRows + 1;
+        }
+        _visibleStart(n, h);
+    }
+
     function onUpdate(dc) {
         var w = dc.getWidth();
         var h = dc.getHeight();
@@ -114,10 +177,20 @@ class CustomMenuView extends WatchUi.View {
         var textLeft = _textLeft(w);
         var rowH = _rowHitHeight(h);
         var pitch = _rowPitch(h);
+        var itemFont = _itemFont(h);
+
+        ensureSelectionVisible(h);
+        var start = _visibleStart(n, h);
+        var maxRows = _maxVisibleRows(h);
+        var endExclusive = start + maxRows;
+        if (endExclusive > n) {
+            endExclusive = n;
+        }
 
         var i;
-        for (i = 0; i < n; i += 1) {
-            var rowTop = _firstRowTop(h) + i * pitch;
+        var slot = 0;
+        for (i = start; i < endExclusive; i += 1) {
+            var rowTop = _firstRowTop(h) + slot * pitch;
             var cy = rowTop + rowH / 2;
             var label = _labels[i];
 
@@ -132,10 +205,11 @@ class CustomMenuView extends WatchUi.View {
             dc.drawText(
                 textLeft,
                 cy,
-                Graphics.FONT_MEDIUM,
+                itemFont,
                 label,
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
             );
+            slot += 1;
         }
     }
 
@@ -145,13 +219,21 @@ class CustomMenuView extends WatchUi.View {
         var n = _labels.size();
         var rowH = _rowHitHeight(h);
         var pitch = _rowPitch(h);
+        var start = _visibleStart(n, h);
+        var maxRows = _maxVisibleRows(h);
+        var endExclusive = start + maxRows;
+        if (endExclusive > n) {
+            endExclusive = n;
+        }
 
         var i;
-        for (i = 0; i < n; i += 1) {
-            var rowTop = _firstRowTop(h) + i * pitch;
+        var slot = 0;
+        for (i = start; i < endExclusive; i += 1) {
+            var rowTop = _firstRowTop(h) + slot * pitch;
             if (x >= 0 && x <= w && y >= rowTop && y <= rowTop + rowH) {
                 return i;
             }
+            slot += 1;
         }
 
         return -1;

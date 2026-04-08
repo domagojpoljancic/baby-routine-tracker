@@ -8,8 +8,7 @@ class DiaperTouchLayout {
         if (bh < 26) {
             bh = 26;
         }
-        var shiftLeft = width * 5 / 100;
-        var left = (width - bw) / 2 - shiftLeft;
+        var left = (width - bw) / 2;
         if (left < width * 2 / 100) {
             left = width * 2 / 100;
         }

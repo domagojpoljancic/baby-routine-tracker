@@ -65,7 +65,6 @@ Layout: **title** `Baby Routine`, then the **newest** event as `time - Label`; w
 - Start → submenu: Left, Right, Bottle  
 - History  
 - History(all)  
-- Settings *(placeholder)*  
 - About *(placeholder)*  
 
 **Screen 2** (title: **Diaper**)
@@ -74,8 +73,11 @@ Layout: **title** `Baby Routine`, then the **newest** event as `time - Label`; w
 - Add diaper *(immediate action, closes menu)*  
 - History  
 - History(all)  
-- Settings *(placeholder)*  
 - About *(placeholder)*  
+
+**Settings** is not listed in the menu for now (reserved for a later build).
+
+Within the custom menu: **swipe up/down** moves the highlight; **swipe right** goes back one level; **drag** on the list scrolls the window on long menus; **tap** a row to activate. Short **vibration** may occur when changing selection or confirming actions on devices that support it (`Attention` APIs).
 
 ---
 
@@ -92,18 +94,19 @@ Hardware (typical mapping; confirm on your watch):
 
 - Feeding circles (screen 1)  
 - Diaper button (screen 2)  
-- Menu rows  
+- Menu rows and menu scrolling (see Menu above)  
 
-Swipe right in the custom menu backs one level where supported.
+**Haptics:** primary screen actions (logging, opening filtered history from the lower half, switching Feeding ↔ Diaper) use a short pulse via `HapticHelper` when the device supports vibration.
 
 ---
 
 ## Known limitations
 
 - History list UI is functional but still needs polish (long lists, scrolling).  
-- Settings, About, and **ThirdScreenView** are placeholders or not wired into navigation.  
+- **About** is still a placeholder; **Settings** is omitted from the menu until implemented. **ThirdScreenView** is not wired into navigation.  
 - Non-touch workflows are not fully validated.  
-- Simulator vs device can differ.  
+- Simulator vs device can differ (touch, vibration).  
+- Not every `manifest.xml` product has been tested on real hardware; validate on models you ship to.  
 - `source/menu/` contains unused scaffolding not wired into the main app.
 
 ---
@@ -116,7 +119,9 @@ Java; [Connect IQ SDK](https://developer.garmin.com/connect-iq/overview/) (`monk
 
 ## Setup
 
-Set `CONNECTIQ_SDK_PATH` or use full paths. In VS Code/Cursor: `garmin.connectIqSdkPath`, `garmin.deviceId` (match `manifest.xml` `<iq:product>`). Copy a valid `developer_key.der` into `keys/` locally (that folder is gitignored). Products in `manifest.xml`: `fenix8solar51mm`, `venu3s`.
+Set `CONNECTIQ_SDK_PATH` or use full paths. In VS Code/Cursor: `garmin.connectIqSdkPath`, `garmin.deviceId` (must be one of the ids in `manifest.xml` `<iq:products>`). Copy a valid `developer_key.der` into `keys/` locally (that folder is gitignored).
+
+The manifest targets **many round watches** (Fenix 6–8 lines, Forerunner 165/255/265/570/955/965/970, Venu 3/4, vívoactive 5, Enduro 3, etc.); see **`manifest.xml`** for the authoritative list.
 
 ---
 
@@ -172,6 +177,7 @@ mkdir -p bin
 | `ScreenIndicator.mc` | Side dots |
 | `FeedingStore.mc`, `FeedingFormatters.mc`, `FeedingActions.mc` | Data + feeding actions |
 | `CustomMenuView.mc`, `CustomMenuDelegate.mc`, `MenuHotspot.mc` | Menu |
+| `HapticHelper.mc` | Short vibration pulse for actions / navigation |
 | `source/history/` | History list |
 | `ThirdScreenView.mc` | Placeholder (not in nav) |
 | `manifest.xml`, `resources/` | Manifest & assets |
@@ -181,10 +187,16 @@ mkdir -p bin
 ## Next steps
 
 - Polish History UI; validate on hardware.  
-- Implement or hide Settings / About.  
+- Implement Settings; flesh out About.  
 
 ---
 
 ## License
 
-Add a license when you publish (not included by default).
+This project is licensed under the MIT License — see [`LICENSE`](LICENSE).
+
+---
+
+## Privacy
+
+Local-only data; no network. Summary for store listings: [`PRIVACY.md`](PRIVACY.md).

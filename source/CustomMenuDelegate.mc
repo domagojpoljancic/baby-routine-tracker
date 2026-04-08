@@ -1,3 +1,4 @@
+import Toybox.Attention;
 import Toybox.System;
 import Toybox.WatchUi;
 
@@ -5,34 +6,45 @@ import Toybox.WatchUi;
 class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
 
     var _view;
+    var _dragActive;
+    var _dragAnchorY;
+    var _didDragMove;
+    var _suppressNextTap;
 
     function initialize(view) {
         BehaviorDelegate.initialize();
         _view = view;
+        _dragActive = false;
+        _dragAnchorY = 0;
+        _didDragMove = false;
+        _suppressNextTap = false;
     }
 
     function onSwipe(swipeEvent) {
-        if (swipeEvent.getDirection() == WatchUi.SWIPE_RIGHT) {
+        var dir = swipeEvent.getDirection();
+        if (dir == WatchUi.SWIPE_RIGHT) {
             _popOneLevel();
             return true;
         }
+        if (dir == WatchUi.SWIPE_UP) {
+            _moveSelection(1, true);
+            return true;
+        }
+        if (dir == WatchUi.SWIPE_DOWN) {
+            _moveSelection(-1, true);
+            return true;
+        }
+        // Consume other swipe directions so they do not reach the view stack below the menu.
         return true;
     }
 
     function onPreviousPage() {
-        var n = _view._labels.size();
-        _view._selectedIndex -= 1;
-        if (_view._selectedIndex < 0) {
-            _view._selectedIndex = n - 1;
-        }
-        WatchUi.requestUpdate();
+        _moveSelection(-1, true);
         return true;
     }
 
     function onNextPage() {
-        var n = _view._labels.size();
-        _view._selectedIndex = (_view._selectedIndex + 1) % n;
-        WatchUi.requestUpdate();
+        _moveSelection(1, true);
         return true;
     }
 
@@ -46,7 +58,71 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    function onHold(clickEvent) {
+        var c = clickEvent.getCoordinates();
+        _dragActive = true;
+        _dragAnchorY = c[1];
+        _didDragMove = false;
+        return true;
+    }
+
+    function onDrag(dragEvent) {
+        var c = dragEvent.getCoordinates();
+        var y = c[1];
+
+        if (!_dragActive) {
+            _dragActive = true;
+            _dragAnchorY = y;
+            _didDragMove = false;
+            return true;
+        }
+
+        var ds = System.getDeviceSettings();
+        var step = _view._rowPitch(ds.screenHeight) / 2;
+        if (step < 6) {
+            step = 6;
+        }
+
+        var delta = y - _dragAnchorY;
+        if (delta <= -step) {
+            var stepsDown = ((0 - delta) / step).toNumber();
+            if (stepsDown > 0) {
+                if (_moveSelection(stepsDown, true) != 0) {
+                    _didDragMove = true;
+                }
+                _dragAnchorY -= stepsDown * step;
+            }
+        } else if (delta >= step) {
+            var stepsUp = (delta / step).toNumber();
+            if (stepsUp > 0) {
+                if (_moveSelection(0 - stepsUp, true) != 0) {
+                    _didDragMove = true;
+                }
+                _dragAnchorY += stepsUp * step;
+            }
+        }
+
+        return true;
+    }
+
+    function onRelease(clickEvent) {
+        if (_dragActive) {
+            _dragActive = false;
+            if (_didDragMove) {
+                _didDragMove = false;
+                _suppressNextTap = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
     function onTap(clickEvent) {
+        if (_suppressNextTap) {
+            _suppressNextTap = false;
+            return true;
+        }
+
         var c = clickEvent.getCoordinates();
         var ds = System.getDeviceSettings();
         var idx = _view.hitRow(c[0], c[1], ds.screenWidth, ds.screenHeight);
@@ -54,9 +130,51 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
             return false;
         }
 
+        var oldIdx = _view._selectedIndex;
         _view._selectedIndex = idx;
+        _view.ensureSelectionVisible(ds.screenHeight);
+        WatchUi.requestUpdate();
+        if (oldIdx != idx) {
+            _emitSelectionHaptic();
+        }
         _commitSelection();
         return true;
+    }
+
+    function _moveSelection(delta, withHaptic) {
+        var n = _view._labels.size();
+        if (n <= 0) {
+            return 0;
+        }
+
+        var oldIdx = _view._selectedIndex;
+        var idx = oldIdx + delta;
+        if (idx < 0) {
+            idx = 0;
+        }
+        if (idx >= n) {
+            idx = n - 1;
+        }
+        if (idx == oldIdx) {
+            return 0;
+        }
+
+        _view._selectedIndex = idx;
+        var ds = System.getDeviceSettings();
+        _view.ensureSelectionVisible(ds.screenHeight);
+        WatchUi.requestUpdate();
+
+        if (withHaptic) {
+            _emitSelectionHaptic();
+        }
+        return idx - oldIdx;
+    }
+
+    function _emitSelectionHaptic() {
+        if (Attention has :vibrate && Attention has :VibeProfile) {
+            var vibe = new Attention.VibeProfile(25, 30);
+            Attention.vibrate([vibe]);
+        }
     }
 
     function _commitSelection() {

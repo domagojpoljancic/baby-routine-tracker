@@ -5,9 +5,9 @@ class FeedingTouchLayout {
     function hitCircle(x, y, width, height) {
         var rowY = height * 31 / 100;
         var r = width * 12 / 100;
-        var leftX = width * 20 / 100;
-        var bottleX = width * 46 / 100;
-        var rightX = width * 72 / 100;
+        var leftX = width * 24 / 100;
+        var bottleX = width * 50 / 100;
+        var rightX = width * 76 / 100;
         var r2 = r * r;
 
         if (_inCircle(x, y, bottleX, rowY, r2)) {

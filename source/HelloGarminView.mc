@@ -88,9 +88,9 @@ class HelloGarminView extends WatchUi.View {
     function _drawTopCircles(dc, screenWidth, screenHeight) {
         var rowY = screenHeight * 31 / 100;
         var circleRadius = screenWidth * 12 / 100;
-        var leftX = screenWidth * 20 / 100;
-        var bottleX = screenWidth * 46 / 100;
-        var rightX = screenWidth * 72 / 100;
+        var leftX = screenWidth * 24 / 100;
+        var bottleX = screenWidth * 50 / 100;
+        var rightX = screenWidth * 76 / 100;
 
         var fillL = _flashCircleCode == 1 ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY;
         var fillB = _flashCircleCode == 3 ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY;

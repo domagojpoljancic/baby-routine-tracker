@@ -110,8 +110,7 @@ class SecondScreenView extends WatchUi.View {
         if (bh < 26) {
             bh = 26;
         }
-        var shiftLeft = w * 5 / 100;
-        var left = (w - bw) / 2 - shiftLeft;
+        var left = (w - bw) / 2;
         if (left < w * 2 / 100) {
             left = w * 2 / 100;
         }

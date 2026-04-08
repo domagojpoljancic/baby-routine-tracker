@@ -44,10 +44,12 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
             var result = new FeedingTouchLayout().hitCircle(x, y, ds.screenWidth, h);
             if (result != null) {
                 (new FeedingActions()).completeCircleTap(result);
+                HapticHelper.subtleActionPulse();
                 return true;
             }
             if (_isBottomHalfTap(y, h)) {
                 _openScreenFilteredHistory();
+                HapticHelper.subtleActionPulse();
                 return true;
             }
             return false;
@@ -56,10 +58,12 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         if (_screen == 2) {
             if (new DiaperTouchLayout().hitDiaperButton(x, y, ds.screenWidth, h)) {
                 (new DiaperActions()).completeAddDiaper();
+                HapticHelper.subtleActionPulse();
                 return true;
             }
             if (_isBottomHalfTap(y, h)) {
                 _openScreenFilteredHistory();
+                HapticHelper.subtleActionPulse();
                 return true;
             }
             return false;
@@ -118,11 +122,13 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         var symbols;
 
         if (_screen == 1) {
-            labels = ["Undo last", "Start", "History", "History(all)", "Settings", "About"];
-            symbols = [:undoLast, :start, :history, :historyAll, :settings, :about];
+            // TEMP: hide Settings for now (restore label/symbol later).
+            labels = ["Undo last", "Start", "History", "History(all)", "About"];
+            symbols = [:undoLast, :start, :history, :historyAll, :about];
         } else if (_screen == 2) {
-            labels = ["Undo last", "Add diaper", "History", "History(all)", "Settings", "About"];
-            symbols = [:undoLast, :addDiaper, :history, :historyAll, :settings, :about];
+            // TEMP: hide Settings for now (restore label/symbol later).
+            labels = ["Undo last", "Add diaper", "History", "History(all)", "About"];
+            symbols = [:undoLast, :addDiaper, :history, :historyAll, :about];
         } else {
             labels = ["Undo last", "Item 1", "Item 2"];
             symbols = [:undoLast, :item1, :item2];
@@ -141,10 +147,12 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     function _goNext() {
         if (_screen == 1) {
+            HapticHelper.subtleActionPulse();
             WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
         } else if (_screen == 2) {
             // TEMP: screen 3 disabled — two-screen wrap (restore ThirdScreenView push when re-enabling).
             // WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
+            HapticHelper.subtleActionPulse();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -155,9 +163,11 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
     function _goPrev() {
         if (_screen == 1) {
             // TEMP: screen 3 disabled — only push screen 2 (restore ThirdScreenView push when re-enabling).
+            HapticHelper.subtleActionPulse();
             WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
             // WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
         } else if (_screen == 2) {
+            HapticHelper.subtleActionPulse();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
