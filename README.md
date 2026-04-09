@@ -1,202 +1,196 @@
 # Baby Routine Tracker
 
-Garmin Connect IQ watch app for logging baby routines on the wrist. **Work in progress** — not production-ready.
+Garmin **Connect IQ** watch app for logging **baby feeding** and **diaper** events from the wrist. On the watch it appears as **Baby Routine** (see `resources/strings.xml`).
 
-**Feeding** (Left, Bottle, Right) and **diaper** events share one append-only store (`Application.Storage`, key `feedings_v1`). On-watch name: **Baby Routine** (`resources/strings.xml`). Launcher icon: `resources/drawables/launcher_icon.png` → `@Drawables.LauncherIcon` in `manifest.xml`.
+**Who it is for:** parents and caregivers who want a fast, on-device log without pulling out a phone.
 
 ---
 
-## Screens
+## Features
 
-Navigation is **two screens** (swipe up/down / keys): **Feeding** ↔ **Diaper**. A third placeholder view exists in source (`ThirdScreenView.mc`) but is **not reachable** from the current navigation stack (intentionally disabled).
+| Area | Behavior |
+|------|----------|
+| **Feeding** | Log **Left**, **Bottle**, or **Right** from the main screen (touch targets where the device supports touch). Optional **Start** submenu in the menu lists the same three actions. |
+| **Diapers** | Log a diaper change from the **Diaper** screen button or **Add diaper** in the screen 2 menu. |
+| **Storage** | Single append-only list in `Application.Storage` under key `feedings_v1` (primitive-friendly entries: type code + timestamp). |
+| **History** | **History** is filtered by screen (feeding-only vs diaper-only). **History(all)** shows the combined timeline. Grouped by day; newest first. |
+| **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
+| **Menu** | Custom list (**CustomMenuView**): swipe up/down or drag to move selection (clamped at first/last item — no wrap), tap or **Select** to activate, **Back** / **ESC** / **swipe right** to close. |
+| **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice. |
+| **Glance** | When the runtime supports `WatchUi.GlanceView`, the app exposes a glance showing the title and the most recent (and optionally previous) event. |
+| **Time format** | Clock and history times follow the device **12h / 24h** setting. |
+
+Short **haptic** feedback is used on supported hardware for primary actions and navigation (`Toybox.Attention` via `HapticHelper`).
+
+---
+
+## Device support
+
+The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`). As of v1.0 that list includes **40** explicit ids across families such as:
+
+- **fēnix** 6 / 7 / 8 (multiple SKUs), **fēnix E**
+- **Forerunner** 165, 255, 265, 570, 955, 965, 970 (including “Music” / size variants where listed)
+- **Venu** 3, 3S, 4 (41 mm / 45 mm)
+- **vívoactive** 5
+- **Enduro** 3
+
+**Important:** Declaring a product in the manifest does **not** mean it was tested on real hardware. Before a wide release, validate on the devices you care about. A **signed package** build (`.iq`) compiles for every device variant the SDK associates with those ids (progress lines like `N OUT OF M DEVICES BUILT` are normal).
+
+**Requirements:** `minApiLevel` **3.3.0** (touch/drag APIs used by the custom menu). Java runtime and the [Connect IQ SDK](https://developer.garmin.com/connect-iq/overview/) (`monkeyc`, `monkeydo`) are required to build.
+
+---
+
+## Screens and workflow
 
 ### Screen 1 — Feeding
 
-- **L / B / R** circles; touch on supported devices.
-- **Main row** and **two lower rows** show **feeding entries only** (types Left, Right, Bottle)—diaper logs are excluded from this screen.
-- With **no entries**, main row shows **Tap L/Bottle/R**; first lower line **Recent History**.
-- **Clock** at top follows the device **12h / 24h** setting (`MainScreenTimeDisplay.mc`).
+- Three touch regions: **Left**, **Bottle**, **Right**.
+- Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
+- **Bottom half** tap opens **feeding-filtered** history.
+- **Menu** (hotspot or **Menu** key): Undo last, Start → Left / Bottle / Right, History, History(all), About.
 
 ### Screen 2 — Diaper
 
-- **Diaper change** button (touch); **Add diaper** in the screen 2 menu uses the same action as the button (no submenu).
-- **Main row** and **lower rows** show **diaper entries only** (newest first by timestamp).
-- **Clock** matches device 12h / 24h setting.
+- **Diaper** button logs a change; **Add diaper** in the menu does the same and closes the menu.
+- Rows show **diaper** entries only (type 4).
+- **Bottom half** tap opens **diaper-filtered** history.
+- Menu: Undo last, Add diaper, History, History(all), About.
 
-**Screen indicator** (left): two dots for the two active screens.
+### Navigation between screens
 
----
+- **Swipe up** or **Next** behavior: Feeding → Diaper → (from Diaper) back to Feeding by popping to the first screen in the stack.
+- **Swipe down** or **Previous** behavior: the inverse pattern.
+- **Screen indicator** (side dots): **two** dots for the two live screens.
 
-## History
+### Screen 3
 
-| Entry point | View |
-|-------------|------|
-| **History** from screen 1 | Feeding-only (`t` in {1,2,3}) |
-| **History** from screen 2 | Diaper-only (`t == 4`) |
-| **History(all)** from either screen | Combined timeline (feeding + diaper) |
+`ThirdScreenView.mc` exists as a **placeholder** and is **not** connected to navigation in v1.0.
 
-- **Entry times** in list rows follow the device **12h / 24h** setting (`FeedingFormatters.formatHistoryRowTimeFromTs`).
-- **History(all)** when empty: **No entries yet**. Feeding-only empty: **No feedings yet**. Diaper-only empty: **No diapers yet**.
+### History
 
----
-
-## Glance
-
-`HelloGarminApp.getGlanceView()` returns `BabyRoutineGlanceView` when `WatchUi has :GlanceView`. The glance runs in a **separate execution context** (no app classes): it reads `feedings_v1` from `Application.Storage` with the same entry shape as `FeedingStore` (`t`, `ts`).
-
-Layout: **title** `Baby Routine`, then the **newest** event as `time - Label`; when there is a second entry, the **previous** event is shown on a third line. Empty store: **No events** only under the title. Time formatting follows the device 12h/24h setting (12h includes AM/PM), consistent with history rows.
+Implemented with `WatchUi.CustomMenu`, scrollable lists, date headers, and empty states (**No feedings yet** / **No diapers yet** / **No entries yet**). Selecting a row closes the history view (see `HistoryDelegate`).
 
 ---
 
-## Undo
+## Privacy and data
 
-| Screen | Effect |
-|--------|--------|
-| **1** | Removes the **most recent feeding** entry (Left / Right / Bottle) |
-| **2** | Removes the **most recent diaper** entry |
-
----
-
-## Menu
-
-**Screen 1** (title: **Feeding**)
-
-- Undo last  
-- Start → submenu: Left, Right, Bottle  
-- History  
-- History(all)  
-- About *(placeholder)*  
-
-**Screen 2** (title: **Diaper**)
-
-- Undo last  
-- Add diaper *(immediate action, closes menu)*  
-- History  
-- History(all)  
-- About *(placeholder)*  
-
-**Settings** is not listed in the menu for now (reserved for a later build).
-
-Within the custom menu: **swipe up/down** moves the highlight; **swipe right** goes back one level; **drag** on the list scrolls the window on long menus; **tap** a row to activate. Short **vibration** may occur when changing selection or confirming actions on devices that support it (`Attention` APIs).
+- All event data stays **on the watch** in Garmin application storage.
+- **No network**, **no cloud sync**, **no analytics**, **no third-party SDKs** in this codebase.
+- A short policy suitable for store listings is in [`PRIVACY.md`](PRIVACY.md).
 
 ---
 
-## Controls
+## Build, package, simulator, install
 
-Hardware (typical mapping; confirm on your watch):
+Replace SDK paths with your own. The examples assume a **developer key** at `keys/developer_key.der` (create with Garmin’s `monkeybrains` tooling; see [Connect IQ docs](https://developer.garmin.com/connect-iq/)).
 
-- **Upper-right** — open menu / confirm selection  
-- **Lower-right** — back / close  
-- **Left middle** — up (menu scroll)  
-- **Left bottom** — down (menu scroll)  
+### Output names
 
-**Touch** (where implemented):
+| Artifact | Typical path |
+|----------|----------------|
+| Single-device app binary | `bin/BabyRoutine.prg` |
+| Store / multi-device package | `bin/BabyRoutine.iq` |
 
-- Feeding circles (screen 1)  
-- Diaper button (screen 2)  
-- Menu rows and menu scrolling (see Menu above)  
-
-**Haptics:** primary screen actions (logging, opening filtered history from the lower half, switching Feeding ↔ Diaper) use a short pulse via `HapticHelper` when the device supports vibration.
-
----
-
-## Known limitations
-
-- History list UI is functional but still needs polish (long lists, scrolling).  
-- **About** is still a placeholder; **Settings** is omitted from the menu until implemented. **ThirdScreenView** is not wired into navigation.  
-- Non-touch workflows are not fully validated.  
-- Simulator vs device can differ (touch, vibration).  
-- Not every `manifest.xml` product has been tested on real hardware; validate on models you ship to.  
-- `source/menu/` contains unused scaffolding not wired into the main app.
-
----
-
-## Prerequisites
-
-Java; [Connect IQ SDK](https://developer.garmin.com/connect-iq/overview/) (`monkeyc`, `monkeydo`); developer key `.der` for signed builds / many local builds. [Monkey C docs](https://developer.garmin.com/connect-iq/monkey-c/).
-
----
-
-## Setup
-
-Set `CONNECTIQ_SDK_PATH` or use full paths. In VS Code/Cursor: `garmin.connectIqSdkPath`, `garmin.deviceId` (must be one of the ids in `manifest.xml` `<iq:products>`). Copy a valid `developer_key.der` into `keys/` locally (that folder is gitignored).
-
-The manifest targets **many round watches** (Fenix 6–8 lines, Forerunner 165/255/265/570/955/965/970, Venu 3/4, vívoactive 5, Enduro 3, etc.); see **`manifest.xml`** for the authoritative list.
-
----
-
-## Build (example — this machine)
-
-SDK example:
-
-`/Users/domagoj.poljancic/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.1.0-2026-03-09-6a872a80b`
+### Build a `.prg` (one device, fast iteration)
 
 ```bash
 mkdir -p bin
-"/Users/domagoj.poljancic/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.1.0-2026-03-09-6a872a80b/bin/monkeyc" \
+"/path/to/connectiq-sdk/bin/monkeyc" \
   -f monkey.jungle \
   -o bin/BabyRoutine.prg \
-  -d fenix8solar51mm \
+  -d venu3s \
   -y keys/developer_key.der
 ```
 
-**Venu 3S** — same command with `-d venu3s` (and run that `.prg` on the matching simulator or device).
+`-d` must be a product id present in `manifest.xml` **and** in your installed SDK.
+
+### Package a signed `.iq` (Connect IQ Store / QA bundle)
+
+Use **`-e`** (application package) and **`-r`** (strip debug symbols) per SDK conventions:
 
 ```bash
 mkdir -p bin
-"$CONNECTIQ_SDK_PATH/bin/monkeyc" -f monkey.jungle -o bin/BabyRoutine.prg -d venu3s -y keys/developer_key.der
+"/path/to/connectiq-sdk/bin/monkeyc" \
+  -f monkey.jungle \
+  -e -r \
+  -o bin/BabyRoutine.iq \
+  -y keys/developer_key.der
 ```
 
-Unsigned build (if your SDK allows):
+Upload the `.iq` through the [Garmin Developer Program](https://developer.garmin.com/connect-iq/submit-an-app/) workflow; version strings and store metadata are set in the portal as well as in your submission assets.
+
+### Run in the simulator
+
+Start the **Connect IQ Simulator**, then (device id must match the `.prg` you built):
 
 ```bash
-mkdir -p bin
-"$CONNECTIQ_SDK_PATH/bin/monkeyc" -f monkey.jungle -o bin/BabyRoutine.prg -d fenix8solar51mm
+"/path/to/connectiq-sdk/bin/monkeydo" bin/BabyRoutine.prg venu3s
 ```
+
+### IDE tasks
+
+`.vscode/tasks.json` includes **Build (.prg)**, **Run in Simulator**, and **Package (.iq, signed, store)**. Set `garmin.connectIqSdkPath`, `garmin.deviceId`, and `garmin.developerKeyPath` in `.vscode/settings.json` (template placeholders are committed).
+
+The default **Build (.prg)** task does **not** pass `-y`; the shell examples above do. If your SDK requires a key for `.prg` builds, add `-y` to the task or use the README commands.
+
+### Install caveats
+
+- Simulator behavior can differ from hardware (touch mapping, vibration).
+- Sideloading a `.prg` is for development; end users typically install from the Connect IQ Store after you publish an `.iq`.
 
 ---
 
-## Simulator (example — this machine)
-
-```bash
-"/Users/domagoj.poljancic/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.1.0-2026-03-09-6a872a80b/bin/monkeydo" \
-  bin/BabyRoutine.prg fenix8solar51mm
-```
-
----
-
-## Project structure (short)
+## Project structure
 
 | Path | Role |
 |------|------|
-| `source/HelloGarminApp.mc` | Entry, `getGlanceView()` |
-| `HelloGarminView.mc`, `FeedingTouchLayout.mc`, `MainScreenTimeDisplay.mc` | Screen 1 + clock |
-| `SecondScreenView.mc`, `DiaperTouchLayout.mc`, `DiaperActions.mc` | Screen 2 |
-| `BabyRoutineGlanceView.mc` | Widget glance |
-| `AppNavigation.mc` | Navigation + `CircularNavDelegate` |
-| `ScreenIndicator.mc` | Side dots |
-| `FeedingStore.mc`, `FeedingFormatters.mc`, `FeedingActions.mc` | Data + feeding actions |
-| `CustomMenuView.mc`, `CustomMenuDelegate.mc`, `MenuHotspot.mc` | Menu |
-| `HapticHelper.mc` | Short vibration pulse for actions / navigation |
-| `source/history/` | History list |
-| `ThirdScreenView.mc` | Placeholder (not in nav) |
-| `manifest.xml`, `resources/` | Manifest & assets |
+| `manifest.xml` | App id, products, `minApiLevel`, launcher icon, entry class |
+| `monkey.jungle` | `source` + `resources` roots |
+| `resources/strings.xml` | `@Strings.AppName` (**Baby Routine**) |
+| `resources/drawables/` | Launcher bitmap |
+| `source/HelloGarminApp.mc` | Entry point class (**HelloGarminApp** — name kept for stable manifest `entry`); `getGlanceView()` |
+| `source/HelloGarminView.mc` | Feeding screen UI |
+| `source/SecondScreenView.mc` | Diaper screen UI |
+| `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push |
+| `source/CustomMenuView.mc`, `CustomMenuDelegate.mc`, `MenuHotspot.mc` | Custom menu |
+| `source/AboutView.mc`, `AboutDelegate.mc` | About screen |
+| `source/FeedingStore.mc`, `FeedingFormatters.mc`, `FeedingActions.mc` | Persistence and feeding actions |
+| `source/DiaperActions.mc`, `DiaperTouchLayout.mc` | Diaper logging |
+| `source/history/*` | History menu construction and rows |
+| `source/BabyRoutineGlanceView.mc` | Glance |
+| `source/HapticHelper.mc` | Vibration helper |
+| `source/menu/MainMenuBuilder.mc`, `BabyRoutineMenu2InputDelegate.mc` | **Unused in v1.0** (reference only) |
+| `source/ThirdScreenView.mc` | Unused placeholder view |
 
 ---
 
-## Next steps
+## Store and release notes
 
-- Polish History UI; validate on hardware.  
-- Implement Settings; flesh out About.  
+- **Launcher icon:** `resources/drawables/launcher_icon.png` → `@Drawables.LauncherIcon`.
+- **Permissions:** none declared in `manifest.xml`; keep this aligned with actual code if you add sensors or network later.
+- **English only** (`eng`) in the manifest languages section.
+- Prepare store screenshots and descriptions separately; they are not generated from this repo.
+- After changing `manifest.xml` products, re-run a full **`-e`** package build before submission.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see [`LICENSE`](LICENSE).
+[MIT License](LICENSE) — Copyright (c) 2026 Domagoj Poljancic.
 
 ---
 
-## Privacy
+## Status and roadmap
 
-Local-only data; no network. Summary for store listings: [`PRIVACY.md`](PRIVACY.md).
+**v1.0** is intended as a complete minimal product: two main screens, shared storage, history, undo, glance, About, and haptics where supported.
+
+**Not in v1.0:** Settings screen (menu slot reserved for later), third main screen, and the unused `Menu2` scaffolding in `source/menu/`. History UI may receive polish in a future version based on feedback.
+
+---
+
+## References
+
+- [Monkey C](https://developer.garmin.com/connect-iq/monkey-c/)
+- [UX guidelines](https://developer.garmin.com/connect-iq/user-experience-guidelines/)
+- [Compatible devices](https://developer.garmin.com/connect-iq/compatible-devices/)
+- [Submit an app](https://developer.garmin.com/connect-iq/submit-an-app/)

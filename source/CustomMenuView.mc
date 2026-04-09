@@ -80,16 +80,15 @@ class CustomMenuView extends WatchUi.View {
     }
 
     function _rowPitch(h) {
-        return h * 15 / 100;
+        return h * 18 / 100;
     }
 
     function _rowHitHeight(h) {
-        return _rowPitch(h) - h * 2 / 100;
+        return _rowPitch(h) - h * 1 / 100;
     }
 
     function _itemFont(h) {
-        // Slightly larger text on larger round displays (e.g., 390x390).
-        if (h >= 380) {
+        if (h >= 260) {
             return Graphics.FONT_LARGE;
         }
         return Graphics.FONT_MEDIUM;

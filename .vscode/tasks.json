@@ -25,11 +25,11 @@
       "problemMatcher": []
     },
     {
-      "label": "Garmin: Package (.iq, signed)",
+      "label": "Garmin: Package (.iq, signed, store)",
       "type": "shell",
-      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\"",
+      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -e -r -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\"",
       "windows": {
-        "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\""
+        "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -e -r -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\""
       },
       "problemMatcher": []
     }

@@ -122,11 +122,11 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         var symbols;
 
         if (_screen == 1) {
-            // TEMP: hide Settings for now (restore label/symbol later).
+            // v1.0: Settings not exposed in menu (future release).
             labels = ["Undo last", "Start", "History", "History(all)", "About"];
             symbols = [:undoLast, :start, :history, :historyAll, :about];
         } else if (_screen == 2) {
-            // TEMP: hide Settings for now (restore label/symbol later).
+            // v1.0: Settings not exposed in menu (future release).
             labels = ["Undo last", "Add diaper", "History", "History(all)", "About"];
             symbols = [:undoLast, :addDiaper, :history, :historyAll, :about];
         } else {
@@ -150,8 +150,7 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
             HapticHelper.subtleActionPulse();
             WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
         } else if (_screen == 2) {
-            // TEMP: screen 3 disabled — two-screen wrap (restore ThirdScreenView push when re-enabling).
-            // WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
+            // v1.0: two-screen flow only (no third screen).
             HapticHelper.subtleActionPulse();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else {
@@ -162,10 +161,9 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     function _goPrev() {
         if (_screen == 1) {
-            // TEMP: screen 3 disabled — only push screen 2 (restore ThirdScreenView push when re-enabling).
+            // v1.0: two-screen flow only (no third screen).
             HapticHelper.subtleActionPulse();
             WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
-            // WatchUi.pushView(new ThirdScreenView(), new CircularNavDelegate(3), WatchUi.SLIDE_IMMEDIATE);
         } else if (_screen == 2) {
             HapticHelper.subtleActionPulse();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);

@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Baby Routine - Connect IQ watch app manifest.
-  Display name from @Strings.AppName. Entry class name unchanged for stable builds.
+  Baby Routine — Connect IQ watch app manifest.
+  Display name: resources/strings.xml (@Strings.AppName).
+  Entry class HelloGarminApp is the stable Connect IQ entry point (historical filename).
+  Target list: see <iq:products>. Package builds expand to all device variants the SDK maps from this list.
+  Application id must be globally unique (Garmin Connect IQ Store); generate a new UUID if "already in use".
 -->
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
     <iq:application
-        id="d0a4010c-a1b2-c3d4-e5f6-0718293a4b5c"
+        id="63e40bcf-387e-4b09-8d28-5deca45f8b60"
         type="watch-app"
         name="@Strings.AppName"
         launcherIcon="@Drawables.LauncherIcon"

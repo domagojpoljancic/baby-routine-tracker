@@ -62,7 +62,7 @@ class HelloGarminView extends WatchUi.View {
 
         var highlightFont;
         if (entries == null || entries.size() == 0) {
-            highlightFont = _pickFittingFont(dc, mainText, [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_XTINY], maxMainWidth);
+            highlightFont = _pickFittingFont(dc, mainText, [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY], maxMainWidth);
         } else {
             highlightFont = _pickMainRowFont(dc, nowTs, entries, maxMainWidth);
         }
@@ -219,7 +219,7 @@ class HelloGarminView extends WatchUi.View {
         var probeRight;
         var probeBottle;
         if (elapsed <= 60) {
-            var suf = " - " + elapsed.toString() + " min";
+            var suf = " - " + elapsed.toString() + "m";
             probeLeft = hhmm + " - Left" + suf;
             probeRight = hhmm + " - Right" + suf;
             probeBottle = hhmm + " - Bottle" + suf;
@@ -229,7 +229,7 @@ class HelloGarminView extends WatchUi.View {
             probeBottle = hhmm + " - Bottle";
         }
 
-        var fonts = [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_XTINY];
+        var fonts = [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY];
         var i;
         for (i = 0; i < fonts.size(); i += 1) {
             var candidate = fonts[i];
@@ -251,7 +251,7 @@ class HelloGarminView extends WatchUi.View {
         return Graphics.FONT_XTINY;
     }
 
-    // [0]=baseText ("HH:MM - Label" or empty-state line), [1]=timerSuffix (" - X min" or ""),
+    // [0]=baseText ("HH:MM - Label" or empty-state line), [1]=timerSuffix (" - Xm" or ""),
     // [2]=timerUseWhite (even unix second => white suffix; odd => light gray); only meaningful if [1] non-empty.
     function _mainRowHighlightParts(nowTs, entries) {
         var sec = Time.now().value();
@@ -270,7 +270,7 @@ class HelloGarminView extends WatchUi.View {
         var timerSuffix = "";
         var elapsed = _fmt.elapsedWholeMinutes(nowTs, latestTs);
         if (elapsed <= 60) {
-            timerSuffix = " - " + elapsed.toString() + " min";
+            timerSuffix = " - " + elapsed.toString() + "m";
         }
 
         return [baseText, timerSuffix, timerUseWhite];

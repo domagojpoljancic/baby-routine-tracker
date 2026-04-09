@@ -6,7 +6,7 @@
   "garmin.connectIqSdkPath": "__SET_ME_CONNECTIQ_SDK_PATH__",
 
   // Must be a product id available in your SDK.
-  "garmin.deviceId": "fenix8solar51mm",
+  "garmin.deviceId": "venu3s",
 
   // Path to your developer key used for signed package exports.
   // Create one with:

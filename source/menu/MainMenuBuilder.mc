@@ -1,5 +1,6 @@
 import Toybox.WatchUi;
 
+// Not used in v1.0 — the app uses CustomMenuView + CustomMenuDelegate. Kept as reference only.
 class MainMenuBuilder {
 
     static function buildMenu(screen) {

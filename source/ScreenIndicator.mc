@@ -36,7 +36,7 @@ class ScreenIndicator {
         var stackYOffset = screenHeight * 65 / 1000;
 
         var i;
-        // TEMP: third dot disabled while screen 3 is out of flow — restore `i <= 3` when re-enabling.
+        // v1.0: two active screens (third indicator disabled).
         for (i = 1; i <= 2; i += 1) {
             var y = highlightRowY + (i - 1) * spacing - stackYOffset;
             if (i == activeScreen) {
