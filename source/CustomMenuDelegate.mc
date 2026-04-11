@@ -15,6 +15,13 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         _suppressTapAfterDrag = false;
     }
 
+    function _touchScrollInvertMult() {
+        if ((new AppSettingsStore()).scrollInvertEnabled()) {
+            return -1;
+        }
+        return 1;
+    }
+
     function onSwipe(swipeEvent) {
         var dir = swipeEvent.getDirection();
         if (dir == WatchUi.SWIPE_RIGHT) {
@@ -29,7 +36,8 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
             _moveSelection(-1, true);
             return true;
         }
-        return false;
+        // Consume other swipe directions so they do not reach the view stack below the menu.
+        return true;
     }
 
     function onDrag(dragEvent) {
@@ -50,11 +58,12 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         }
 
         if (t == WatchUi.DRAG_TYPE_CONTINUE) {
+            var m = _touchScrollInvertMult();
             var delta = y - _dragAnchorY;
             if (delta <= -step) {
                 var steps = ((0 - delta) / step).toNumber();
                 if (steps > 0) {
-                    if (_moveSelection(steps, true) != 0) {
+                    if (_moveSelection(m * steps, true) != 0) {
                         _suppressTapAfterDrag = true;
                     }
                     _dragAnchorY -= steps * step;
@@ -62,7 +71,7 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
             } else if (delta >= step) {
                 var stepsDown = (delta / step).toNumber();
                 if (stepsDown > 0) {
-                    if (_moveSelection(0 - stepsDown, true) != 0) {
+                    if (_moveSelection(m * (0 - stepsDown), true) != 0) {
                         _suppressTapAfterDrag = true;
                     }
                     _dragAnchorY += stepsDown * step;
@@ -225,6 +234,13 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         if (sym == :historyAll) {
             HapticHelper.subtleActionPulse();
             WatchUi.pushView(HistoryView.build(:all), new HistoryDelegate(), WatchUi.SLIDE_IMMEDIATE);
+            return;
+        }
+
+        if (sym == :settings) {
+            HapticHelper.subtleActionPulse();
+            var sv = new SettingsView();
+            WatchUi.pushView(sv, new SettingsDelegate(sv), WatchUi.SLIDE_IMMEDIATE);
             return;
         }
 

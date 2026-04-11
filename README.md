@@ -14,12 +14,13 @@ Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8df
 |------|----------|
 | **Feeding** | Log **Left**, **Bottle**, or **Right** from the main screen (touch targets where the device supports touch). Optional **Start** submenu in the menu lists the same three actions. |
 | **Diapers** | Log a diaper change from the **Diaper** screen button or **Add diaper** in the screen 2 menu. |
-| **Storage** | Single append-only list in `Application.Storage` under key `feedings_v1` (primitive-friendly entries: type code + timestamp). |
+| **Storage** | Event log: append-only list in `Application.Storage` under key `feedings_v1` (type code + timestamp). Preferences (e.g. scroll invert) use separate keys such as `settings_scroll_invert_v1`. |
 | **History** | **History** is filtered by screen (feeding-only vs diaper-only). **History(all)** shows the combined timeline. Grouped by day; newest first. |
 | **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
 | **Menu** | Custom list (**CustomMenuView**): swipe up/down or drag to move selection (clamped at first/last item — no wrap), tap or **Select** to activate, **Back** / **ESC** / **swipe right** to close. |
+| **Settings** | **Scroll invert:** when enabled, **finger-drag** scrolling in the custom menu moves the highlight in the opposite direction (stored under `settings_scroll_invert_v1` in `Application.Storage`). Swipe up/down and hardware keys are unchanged. |
 | **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice. |
-| **Glance** | When the runtime supports `WatchUi.GlanceView`, the app exposes a glance showing the title and the most recent (and optionally previous) event. |
+| **Glance** | When the runtime supports `WatchUi.GlanceView`, the app exposes a glance with title **Baby Routine**, latest event line, and optionally the previous event. Event lines use **one shared font size** (chosen for width and vertical fit under the round mask) so rows do not look mismatched. |
 | **Time format** | Clock and history times follow the device **12h / 24h** setting. |
 
 Short **haptic** feedback is used on supported hardware for primary actions and navigation (`Toybox.Attention` via `HapticHelper`).
@@ -49,14 +50,14 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 - Three touch regions: **Left**, **Bottle**, **Right**.
 - Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
 - **Bottom half** tap opens **feeding-filtered** history.
-- **Menu** (hotspot or **Menu** key): Undo last, Start → Left / Bottle / Right, History, History(all), About.
+- **Menu** (hotspot or **Menu** key): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, About.
 
 ### Screen 2 — Diaper
 
 - **Diaper** button logs a change; **Add diaper** in the menu does the same and closes the menu.
 - Rows show **diaper** entries only (type 4).
 - **Bottom half** tap opens **diaper-filtered** history.
-- Menu: Undo last, Add diaper, History, History(all), About.
+- Menu: Undo last, Add diaper, History, History(all), Settings, About.
 
 ### Navigation between screens
 
@@ -137,7 +138,7 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 
 ### Install caveats
 
-- Simulator behavior can differ from hardware (touch mapping, vibration).
+- Simulator behavior can differ from hardware (touch mapping, vibration, glance layout).
 - Sideloading a `.prg` is for development; end users typically install from the Connect IQ Store after you publish an `.iq`.
 
 ---
@@ -156,6 +157,8 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 | `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push |
 | `source/CustomMenuView.mc`, `CustomMenuDelegate.mc`, `MenuHotspot.mc` | Custom menu |
 | `source/AboutView.mc`, `AboutDelegate.mc` | About screen |
+| `source/AppSettingsStore.mc` | App preferences in `Application.Storage` (separate from `feedings_v1`) |
+| `source/SettingsView.mc`, `SettingsDelegate.mc` | Settings UI (e.g. scroll invert) |
 | `source/FeedingStore.mc`, `FeedingFormatters.mc`, `FeedingActions.mc` | Persistence and feeding actions |
 | `source/DiaperActions.mc`, `DiaperTouchLayout.mc` | Diaper logging |
 | `source/history/*` | History menu construction and rows |
@@ -186,7 +189,9 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 
 **v1.0** is intended as a complete minimal product: two main screens, shared storage, history, undo, glance, About, and haptics where supported.
 
-**Not in v1.0:** Settings screen (menu slot reserved for later), third main screen, and the unused `Menu2` scaffolding in `source/menu/`. History UI may receive polish in a future version based on feedback.
+**Develop branch / unreleased work:** Features landing on `develop` (e.g. Settings with scroll invert, glance typography tweaks) are **verified in the Connect IQ simulator only** — **not yet validated on a physical watch**. Run a hardware pass before merging to `main` or submitting a store build.
+
+**Not in v1.0:** Third main screen and the unused `Menu2` scaffolding in `source/menu/`. Settings may grow beyond scroll invert in a future version. History UI may receive polish based on feedback.
 
 ---
 

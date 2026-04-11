@@ -122,13 +122,11 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         var symbols;
 
         if (_screen == 1) {
-            // v1.0: Settings not exposed in menu (future release).
-            labels = ["Undo last", "Start", "History", "History(all)", "About"];
-            symbols = [:undoLast, :start, :history, :historyAll, :about];
+            labels = ["Undo last", "Start", "History", "History(all)", "Settings", "About"];
+            symbols = [:undoLast, :start, :history, :historyAll, :settings, :about];
         } else if (_screen == 2) {
-            // v1.0: Settings not exposed in menu (future release).
-            labels = ["Undo last", "Add diaper", "History", "History(all)", "About"];
-            symbols = [:undoLast, :addDiaper, :history, :historyAll, :about];
+            labels = ["Undo last", "Add diaper", "History", "History(all)", "Settings", "About"];
+            symbols = [:undoLast, :addDiaper, :history, :historyAll, :settings, :about];
         } else {
             labels = ["Undo last", "Item 1", "Item 2"];
             symbols = [:undoLast, :item1, :item2];
