@@ -117,16 +117,16 @@ class HistoryEmptyItem extends WatchUi.CustomMenuItem {
     function draw(dc) {
         var w = dc.getWidth();
         var h = dc.getHeight();
-        var left = w * 10 / 100;
+        var cx = w / 2;
 
         var fh = dc.getFontHeight(Graphics.FONT_SMALL);
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            left,
+            cx,
             2 + fh / 2,
             Graphics.FONT_SMALL,
             _message,
-            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
 }

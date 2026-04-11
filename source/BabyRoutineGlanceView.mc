@@ -98,9 +98,9 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         return _formatTimeFromTs(_entryTs(entry)) + " - " + _typeLabel(_entryType(entry));
     }
 
-    function _rowFontFor(dc, w, text) {
+    function _rowFontFor(dc, maxLineWidth, text) {
         var f = Graphics.FONT_TINY;
-        if (dc.getTextWidthInPixels(text, f) > w * 94 / 100) {
+        if (dc.getTextWidthInPixels(text, f) > maxLineWidth) {
             f = Graphics.FONT_XTINY;
         }
         return f;
@@ -130,8 +130,17 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        var row1Font = _rowFontFor(dc, w, line1);
-        var row2Font = line2 != null ? _rowFontFor(dc, w, line2) : row1Font;
+        var padL = 12;
+        if (w < 200) {
+            padL = 10;
+        }
+        var maxLineW = w - padL - 8;
+        if (maxLineW < 40) {
+            maxLineW = 40;
+        }
+
+        var row1Font = _rowFontFor(dc, maxLineW, line1);
+        var row2Font = line2 != null ? _rowFontFor(dc, maxLineW, line2) : row1Font;
 
         var titleFh = dc.getFontHeight(titleFont);
         var row1Fh = dc.getFontHeight(row1Font);
@@ -150,26 +159,26 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            w / 2,
+            padL,
             titleY,
             titleFont,
             titleText,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         dc.drawText(
-            w / 2,
+            padL,
             row1Y,
             row1Font,
             line1,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         if (line2 != null) {
             dc.drawText(
-                w / 2,
+                padL,
                 row2Y,
                 row2Font,
                 line2,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
             );
         }
     }
