@@ -4,6 +4,8 @@ Garmin **Connect IQ** watch app for logging **baby feeding** and **diaper** even
 
 **Who it is for:** parents and caregivers who want a fast, on-device log without pulling out a phone.
 
+Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8dfd-ae30a4a37915
+
 ---
 
 ## Features
