@@ -15,7 +15,8 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         _suppressTapAfterDrag = false;
     }
 
-    function _touchScrollInvertMult() {
+    // +1 = normal touch scroll; -1 = mirror (same thresholds and anchor math as normal, opposite selection delta).
+    function _touchScrollDir() {
         if ((new AppSettingsStore()).scrollInvertEnabled()) {
             return -1;
         }
@@ -28,12 +29,13 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             return true;
         }
+        var d = _touchScrollDir();
         if (dir == WatchUi.SWIPE_UP) {
-            _moveSelection(1, true);
+            _moveSelection(d * 1, true);
             return true;
         }
         if (dir == WatchUi.SWIPE_DOWN) {
-            _moveSelection(-1, true);
+            _moveSelection(d * -1, true);
             return true;
         }
         // Consume other swipe directions so they do not reach the view stack below the menu.
@@ -58,12 +60,12 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
         }
 
         if (t == WatchUi.DRAG_TYPE_CONTINUE) {
-            var m = _touchScrollInvertMult();
-            var delta = y - _dragAnchorY;
+            var raw = y - _dragAnchorY;
+            var delta = raw * _touchScrollDir();
             if (delta <= -step) {
                 var steps = ((0 - delta) / step).toNumber();
                 if (steps > 0) {
-                    if (_moveSelection(m * steps, true) != 0) {
+                    if (_moveSelection(steps, true) != 0) {
                         _suppressTapAfterDrag = true;
                     }
                     _dragAnchorY -= steps * step;
@@ -71,7 +73,7 @@ class CustomMenuDelegate extends WatchUi.BehaviorDelegate {
             } else if (delta >= step) {
                 var stepsDown = (delta / step).toNumber();
                 if (stepsDown > 0) {
-                    if (_moveSelection(m * (0 - stepsDown), true) != 0) {
+                    if (_moveSelection(0 - stepsDown, true) != 0) {
                         _suppressTapAfterDrag = true;
                     }
                     _dragAnchorY += stepsDown * step;

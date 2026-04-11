@@ -18,9 +18,9 @@ Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8df
 | **History** | **History** is filtered by screen (feeding-only vs diaper-only). **History(all)** shows the combined timeline. Grouped by day; newest first. |
 | **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
 | **Menu** | Custom list (**CustomMenuView**): swipe up/down or drag to move selection (clamped at first/last item — no wrap), tap or **Select** to activate, **Back** / **ESC** / **swipe right** to close. |
-| **Settings** | **Scroll invert:** when enabled, **finger-drag** scrolling in the custom menu moves the highlight in the opposite direction (stored under `settings_scroll_invert_v1` in `Application.Storage`). Swipe up/down and hardware keys are unchanged. |
+| **Settings** | **Scroll invert:** when enabled, **swipe up/down** and **finger-drag** in the custom menu move the highlight in the opposite direction (stored under `settings_scroll_invert_v1`). **Hardware up/down** keys in the menu keep the default mapping. |
 | **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice. |
-| **Glance** | When the runtime supports `WatchUi.GlanceView`, the app exposes a glance with title **Baby Routine**, latest event line, and optionally the previous event. Event lines use **one shared font size** (chosen for width and vertical fit under the round mask) so rows do not look mismatched. |
+| **Glance** | When the runtime supports `WatchUi.GlanceView`, the app shows title **Baby Routine**, the latest event line, and optionally the previous line. Both event lines share the same font tier: **TINY**, or **XTINY** if either line is wider than **94%** of the glance width (same rule as the empty-state line). |
 | **Time format** | Clock and history times follow the device **12h / 24h** setting. |
 
 Short **haptic** feedback is used on supported hardware for primary actions and navigation (`Toybox.Attention` via `HapticHelper`).
@@ -50,17 +50,18 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 - Three touch regions: **Left**, **Bottle**, **Right**.
 - Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
 - **Bottom half** tap opens **feeding-filtered** history.
-- **Menu** (hotspot or **Menu** key): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, About.
+- **Menu** (hotspot, **Menu** key, or **swipe left**): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, About.
 
 ### Screen 2 — Diaper
 
 - **Diaper** button logs a change; **Add diaper** in the menu does the same and closes the menu.
 - Rows show **diaper** entries only (type 4).
 - **Bottom half** tap opens **diaper-filtered** history.
-- Menu: Undo last, Add diaper, History, History(all), Settings, About.
+- Menu: Undo last, Add diaper, History, History(all), Settings, About (open via hotspot, **Menu** key, or **swipe left**).
 
 ### Navigation between screens
 
+- **Swipe left** on the Feeding or Diaper screen opens the **same menu** as the hotspot / **Menu** key (does not switch screens).
 - **Swipe up** or **Next** behavior: Feeding → Diaper → (from Diaper) back to Feeding by popping to the first screen in the stack.
 - **Swipe down** or **Previous** behavior: the inverse pattern.
 - **Screen indicator** (side dots): **two** dots for the two live screens.
@@ -92,7 +93,8 @@ Replace SDK paths with your own. The examples assume a **developer key** at `key
 | Artifact | Typical path |
 |----------|----------------|
 | Single-device app binary | `bin/BabyRoutine.prg` |
-| Store / multi-device package | `bin/BabyRoutine.iq` |
+| Store / multi-device package (production manifest) | `bin/BabyRoutine.iq` |
+| Store test/beta package (separate app id / display name) | `bin/BabyRoutine-Test.iq` |
 
 ### Build a `.prg` (one device, fast iteration)
 
@@ -122,6 +124,21 @@ mkdir -p bin
 
 Upload the `.iq` through the [Garmin Developer Program](https://developer.garmin.com/connect-iq/submit-an-app/) workflow; version strings and store metadata are set in the portal as well as in your submission assets.
 
+### Package a test / beta `.iq` (separate store listing)
+
+Use **`monkey.test.jungle`** and **`manifest.test.xml`**: different **application id** and on-watch name **`Baby Routine (Test)`** (`@Strings.AppNameTest`), so you can publish side-by-side with production.
+
+```bash
+mkdir -p bin
+"/path/to/connectiq-sdk/bin/monkeyc" \
+  -f monkey.test.jungle \
+  -e -r \
+  -o bin/BabyRoutine-Test.iq \
+  -y keys/developer_key.der
+```
+
+The **`id`** in `manifest.test.xml` must match the UUID of your **test** app in the Garmin developer portal (replace it if the portal shows a different id). Keep `<iq:products>` in the test manifest aligned with production when you change device targets.
+
 ### Run in the simulator
 
 Start the **Connect IQ Simulator**, then (device id must match the `.prg` you built):
@@ -132,7 +149,7 @@ Start the **Connect IQ Simulator**, then (device id must match the `.prg` you bu
 
 ### IDE tasks
 
-`.vscode/tasks.json` includes **Build (.prg)**, **Run in Simulator**, and **Package (.iq, signed, store)**. Set `garmin.connectIqSdkPath`, `garmin.deviceId`, and `garmin.developerKeyPath` in `.vscode/settings.json` (template placeholders are committed).
+`.vscode/tasks.json` includes **Build (.prg)**, **Run in Simulator**, **Package (.iq, signed, store)**, and **Package test .iq (manifest.test.xml)** → `bin/BabyRoutine-Test.iq`. Set `garmin.connectIqSdkPath`, `garmin.deviceId`, and `garmin.developerKeyPath` in `.vscode/settings.json` (template placeholders are committed).
 
 The default **Build (.prg)** task does **not** pass `-y`; the shell examples above do. If your SDK requires a key for `.prg` builds, add `-y` to the task or use the README commands.
 
@@ -147,9 +164,11 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 
 | Path | Role |
 |------|------|
-| `manifest.xml` | App id, products, `minApiLevel`, launcher icon, entry class |
-| `monkey.jungle` | `source` + `resources` roots |
-| `resources/strings.xml` | `@Strings.AppName` (**Baby Routine**) |
+| `manifest.xml` | Production app id, products, `minApiLevel`, launcher icon, entry class |
+| `manifest.test.xml` | Test/beta app id + products (sync with production list); `@Strings.AppNameTest` |
+| `monkey.jungle` | Production jungle → `manifest.xml` |
+| `monkey.test.jungle` | Test jungle → `manifest.test.xml` |
+| `resources/strings.xml` | `@Strings.AppName`, `@Strings.AppNameTest` |
 | `resources/drawables/` | Launcher bitmap |
 | `source/HelloGarminApp.mc` | Entry point class (**HelloGarminApp** — name kept for stable manifest `entry`); `getGlanceView()` |
 | `source/HelloGarminView.mc` | Feeding screen UI |
@@ -175,7 +194,7 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 - **Permissions:** none declared in `manifest.xml`; keep this aligned with actual code if you add sensors or network later.
 - **English only** (`eng`) in the manifest languages section.
 - Prepare store screenshots and descriptions separately; they are not generated from this repo.
-- After changing `manifest.xml` products, re-run a full **`-e`** package build before submission.
+- After changing `manifest.xml` products, re-run a full **`-e`** package build before submission; update **`manifest.test.xml`** products to match if you ship a test build too.
 
 ---
 

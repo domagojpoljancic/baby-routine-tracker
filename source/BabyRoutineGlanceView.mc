@@ -98,60 +98,28 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         return _formatTimeFromTs(_entryTs(entry)) + " - " + _typeLabel(_entryType(entry));
     }
 
-    // Prefer SMALL, then TINY, then XTINY (width only — used for empty state).
-    function _rowFontFor(dc, maxLineWidth, text) {
-        var f = Graphics.FONT_SMALL;
-        if (dc.getTextWidthInPixels(text, f) > maxLineWidth) {
-            f = Graphics.FONT_TINY;
-        }
-        if (dc.getTextWidthInPixels(text, f) > maxLineWidth) {
+    // Same rule as main branch: TINY first, XTINY only if wider than 94% of full glance width.
+    // Using full canvas width for the measure (not a reduced text column) is what keeps entries large.
+    function _rowFontFor(dc, w, text) {
+        var maxW = w * 94 / 100;
+        var f = Graphics.FONT_TINY;
+        if (dc.getTextWidthInPixels(text, f) > maxW) {
             f = Graphics.FONT_XTINY;
         }
         return f;
     }
 
-    // One font for all event rows: largest that fits maxLineW and fits vertically in the glance
-    // (avoids row2 clipped by the round mask — looked like “diaper is smaller” than bottle/feeding).
-    function _pickEventFontForGlance(dc, maxLineW, text1, text2, titleFh, h) {
-        var padTop = h * 6 / 100;
-        if (padTop < 2) {
-            padTop = 2;
+    // One font for both event rows (same TINY/XTINY tier) so line widths don’t mix sizes.
+    function _eventFontForGlance(dc, w, text1, text2) {
+        var maxW = w * 94 / 100;
+        var f = Graphics.FONT_TINY;
+        if (dc.getTextWidthInPixels(text1, f) > maxW) {
+            f = Graphics.FONT_XTINY;
         }
-        var gapTitle = 2;
-        var gapRows = 1;
-        var padBottom = 4;
-        if (h < 120) {
-            padBottom = 2;
+        if (text2 != null && dc.getTextWidthInPixels(text2, f) > maxW) {
+            f = Graphics.FONT_XTINY;
         }
-
-        var fonts = [Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY];
-        var fi;
-        for (fi = 0; fi < fonts.size(); fi++) {
-            var f = fonts[fi];
-            if (dc.getTextWidthInPixels(text1, f) > maxLineW) {
-                continue;
-            }
-            if (text2 != null && dc.getTextWidthInPixels(text2, f) > maxLineW) {
-                continue;
-            }
-
-            var rowFh = dc.getFontHeight(f);
-            var titleY = padTop + titleFh / 2;
-            var row1Y = titleY + titleFh / 2 + gapTitle + rowFh / 2;
-            var bottom;
-            if (text2 != null) {
-                var row2Y = row1Y + rowFh / 2 + gapRows + rowFh / 2;
-                bottom = row2Y + rowFh / 2;
-            } else {
-                bottom = row1Y + rowFh / 2;
-            }
-
-            if (bottom <= h - padBottom) {
-                return f;
-            }
-        }
-
-        return Graphics.FONT_XTINY;
+        return f;
     }
 
     function onUpdate(dc) {
@@ -183,22 +151,20 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (w < 200) {
             padL = 10;
         }
-        var maxLineW = w - padL - 8;
-        if (maxLineW < 40) {
-            maxLineW = 40;
-        }
-
-        var titleFh = dc.getFontHeight(titleFont);
 
         var eventFont;
         if (isEmpty) {
-            eventFont = _rowFontFor(dc, maxLineW, line1);
+            eventFont = _rowFontFor(dc, w, line1);
+        } else if (line2 != null) {
+            eventFont = _eventFontForGlance(dc, w, line1, line2);
         } else {
-            eventFont = _pickEventFontForGlance(dc, maxLineW, line1, line2, titleFh, h);
+            eventFont = _rowFontFor(dc, w, line1);
         }
 
         var row1Font = eventFont;
         var row2Font = eventFont;
+
+        var titleFh = dc.getFontHeight(titleFont);
         var row1Fh = dc.getFontHeight(row1Font);
         var row2Fh = line2 != null ? dc.getFontHeight(row2Font) : 0;
 

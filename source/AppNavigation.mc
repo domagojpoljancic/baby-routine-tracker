@@ -2,7 +2,7 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
-// Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. Circular via push/pop stack.
+// Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. SWIPE_LEFT opens menu (same as menu key / hotspot).
 // onTap order — screen 1: menu hotspot, L/B/R circles, bottom half → filtered History. Screen 2: menu, diaper button, bottom half → History.
 // Custom menu: onMenu, KEY_ENTER, hotspot tap — _pushScreenMenu(); KEY_ESC — popView (see reference MainDelegate).
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
@@ -16,6 +16,10 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     function onSwipe(swipeEvent) {
         var dir = swipeEvent.getDirection();
+        if (dir == WatchUi.SWIPE_LEFT) {
+            _pushScreenMenu();
+            return true;
+        }
         if (dir == WatchUi.SWIPE_UP) {
             _goNext();
             return true;

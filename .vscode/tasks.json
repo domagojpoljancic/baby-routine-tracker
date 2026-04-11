@@ -32,6 +32,15 @@
         "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -e -r -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\""
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Garmin: Package test .iq (manifest.test.xml)",
+      "type": "shell",
+      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.test.jungle -e -r -o bin/BabyRoutine-Test.iq -y \"${config:garmin.developerKeyPath}\"",
+      "windows": {
+        "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.test.jungle -e -r -o bin/BabyRoutine-Test.iq -y \"${config:garmin.developerKeyPath}\""
+      },
+      "problemMatcher": []
     }
   ]
 }

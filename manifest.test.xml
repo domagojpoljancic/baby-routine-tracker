@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Baby Routine — Connect IQ watch app manifest.
-  Display name: resources/strings.xml (@Strings.AppName).
-  Entry class HelloGarminApp is the stable Connect IQ entry point (historical filename).
-  Target list: see <iq:products>. Package builds expand to all device variants the SDK maps from this list.
-  Application id must match this app’s listing in Garmin Developer (production). Test/beta uploads: use manifest.test.xml + monkey.test.jungle.
+  TEST / BETA store package — separate Garmin app listing from production (manifest.xml).
+
+  Application id below must match your *test* app in https://developer.garmin.com
+  (Garmin assigns an ID when you create the app). If the portal shows a different UUID,
+  replace the id attribute to match — otherwise uploads will fail.
+
+  Keep <iq:products> in sync with manifest.xml when you change device targets.
 -->
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
     <iq:application
-        id="63e40bcf-387e-4b09-8d28-5deca45f8b60"
+        id="bb0e6478-b543-4c4c-ada6-f7607f396a88"
         type="watch-app"
-        name="@Strings.AppName"
+        name="@Strings.AppNameTest"
         launcherIcon="@Drawables.LauncherIcon"
         entry="HelloGarminApp"
         minApiLevel="3.3.0">
 
         <iq:products>
-            <!-- Keep this in sync with DEVICE_ID you use in tasks/settings -->
             <iq:product id="enduro3"/>
             <iq:product id="fenix6"/>
             <iq:product id="fenix6pro"/>
