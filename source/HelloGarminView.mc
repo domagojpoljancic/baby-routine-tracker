@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Time;
+import Toybox.Timer;
 import Toybox.WatchUi;
 
 class HelloGarminView extends WatchUi.View {
@@ -8,6 +9,8 @@ class HelloGarminView extends WatchUi.View {
     var _store;
     var _fmt;
     var _animTick = 0;
+    var _onboardingDelayStarted;
+    var _onboardingTimer;
     // Last tapped circle for brief fill flash: 1=L, 2=R, 3=B (matches FeedingTouchLayout); null = none.
     var _flashCircleCode = null;
     var _flashFramesRemaining = 0;
@@ -18,6 +21,8 @@ class HelloGarminView extends WatchUi.View {
         _screenDots = new ScreenIndicator();
         _store = new FeedingStore();
         _fmt = new FeedingFormatters();
+        _onboardingDelayStarted = false;
+        _onboardingTimer = null;
     }
 
     function onLayout(dc) {
@@ -25,6 +30,25 @@ class HelloGarminView extends WatchUi.View {
 
     function onShow() {
         WatchUi.animate(self, :_animTick, WatchUi.ANIM_TYPE_LINEAR, 0, 1, 3600.0, null);
+
+        if (_onboardingDelayStarted) {
+            return;
+        }
+        if ((new OnboardingEligibility()).hasAnyEntry()) {
+            _onboardingDelayStarted = true;
+            return;
+        }
+        _onboardingDelayStarted = true;
+        _onboardingTimer = new Timer.Timer();
+        _onboardingTimer.start(self.method(:onboardingDeferredPush), 1000, false);
+    }
+
+    // Timer callback must be an instance method; self.method yields Method() as Void for Timer.start.
+    function onboardingDeferredPush() as Void {
+        if ((new OnboardingEligibility()).hasAnyEntry()) {
+            return;
+        }
+        WatchUi.pushView(new OnboardingOverlayView(), new OnboardingOverlayDelegate(_screenIndex), WatchUi.SLIDE_IMMEDIATE);
     }
 
     function onHide() {

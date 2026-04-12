@@ -18,7 +18,7 @@ Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8df
 | **History** | **History** is filtered by screen (feeding-only vs diaper-only). **History(all)** shows the combined timeline. Grouped by day; newest first. |
 | **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
 | **Menu** | Custom list (**CustomMenuView**): swipe up/down or drag to move selection (clamped at first/last item — no wrap), tap or **Select** to activate, **Back** / **ESC** / **swipe right** to close. |
-| **Settings** | **Scroll invert:** when enabled, **swipe up/down** and **finger-drag** in the custom menu move the highlight in the opposite direction (stored under `settings_scroll_invert_v1`). **Hardware up/down** keys in the menu keep the default mapping. |
+| **Settings** | **Scroll invert** is **work in progress**: the toggle is stored (`settings_scroll_invert_v1`), but **inversion does not work correctly in the current build** (menu scrolling behaves as normal). A fix is planned. |
 | **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice. |
 | **Glance** | When the runtime supports `WatchUi.GlanceView`, the app shows title **Baby Routine**, the latest event line, and optionally the previous line. Both event lines share the same font tier: **TINY**, or **XTINY** if either line is wider than **94%** of the glance width (same rule as the empty-state line). |
 | **Time format** | Clock and history times follow the device **12h / 24h** setting. |
@@ -47,6 +47,7 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### Screen 1 — Feeding
 
+- **First run (empty store):** about **one second** after the Feeding view appears, a short **onboarding overlay** dims the **upper half** and shows hints (**Menu »** / **« or left swipe**). It **auto-dismisses** after ~3s, or dismiss on tap (outside the menu hotspot), swipe, or most keys. Tapping the **menu hotspot**, **swipe left**, **Menu** key, or **Enter** dismisses the overlay and **opens the main menu** (same stack as normal navigation). Once any event exists in `feedings_v1`, the overlay is skipped.
 - Three touch regions: **Left**, **Bottle**, **Right**.
 - Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
 - **Bottom half** tap opens **feeding-filtered** history.
@@ -173,7 +174,8 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 | `source/HelloGarminApp.mc` | Entry point class (**HelloGarminApp** — name kept for stable manifest `entry`); `getGlanceView()` |
 | `source/HelloGarminView.mc` | Feeding screen UI |
 | `source/SecondScreenView.mc` | Diaper screen UI |
-| `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push |
+| `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push; `openScreenMenu()` for programmatic open |
+| `source/OnboardingEligibility.mc`, `OnboardingOverlayView.mc`, `OnboardingOverlayDelegate.mc` | First-run hint when the event store is empty (Feeding screen) |
 | `source/CustomMenuView.mc`, `CustomMenuDelegate.mc`, `MenuHotspot.mc` | Custom menu |
 | `source/AboutView.mc`, `AboutDelegate.mc` | About screen |
 | `source/AppSettingsStore.mc` | App preferences in `Application.Storage` (separate from `feedings_v1`) |
@@ -195,6 +197,7 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 - **English only** (`eng`) in the manifest languages section.
 - Prepare store screenshots and descriptions separately; they are not generated from this repo.
 - After changing `manifest.xml` products, re-run a full **`-e`** package build before submission; update **`manifest.test.xml`** products to match if you ship a test build too.
+- **Scroll invert** (Settings): treat as **placeholder / WIP** until a release note says otherwise; the current build does not apply inversion reliably.
 
 ---
 
@@ -208,7 +211,7 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 
 **v1.0** is intended as a complete minimal product: two main screens, shared storage, history, undo, glance, About, and haptics where supported.
 
-**Develop branch / unreleased work:** Features landing on `develop` (e.g. Settings with scroll invert, glance typography tweaks) are **verified in the Connect IQ simulator only** — **not yet validated on a physical watch**. Run a hardware pass before merging to `main` or submitting a store build.
+**Develop branch / unreleased work:** Verified in the **Connect IQ simulator** where noted; **not fully validated on a physical watch**. **Scroll invert** in Settings is **WIP** and **non-functional** in the current code path despite the toggle. Run a hardware pass before merging to `main` or submitting a store build.
 
 **Not in v1.0:** Third main screen and the unused `Menu2` scaffolding in `source/menu/`. Settings may grow beyond scroll invert in a future version. History UI may receive polish based on feedback.
 

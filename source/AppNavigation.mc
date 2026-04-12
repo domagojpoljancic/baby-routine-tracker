@@ -121,6 +121,11 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    // Called after onboarding overlay pops so menu opens (same as hotspot / SWIPE_LEFT / KEY_ENTER).
+    function openScreenMenu() {
+        _pushScreenMenu();
+    }
+
     function _pushScreenMenu() {
         var labels;
         var symbols;
