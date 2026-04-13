@@ -4,7 +4,7 @@ import Toybox.WatchUi;
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
 // Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. SWIPE_LEFT opens menu (same as menu key / hotspot).
 // onTap order — screen 1: menu hotspot, L/B/R circles, bottom half → filtered History. Screen 2: menu, diaper button, bottom half → History.
-// Custom menu: onMenu, KEY_ENTER, hotspot tap — _pushScreenMenu(); KEY_ESC — popView (see reference MainDelegate).
+// Main menus: Garmin Menu2 + Menu2InputDelegate (same pattern as breastfeed-tracker). onMenu, KEY_ENTER, hotspot — _pushScreenMenu().
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
@@ -76,7 +76,7 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         return false;
     }
 
-    // Same History modes as CustomMenuDelegate :history (not History(all)).
+    // Same History modes as main menu :history (not History(all)).
     function _openScreenFilteredHistory() {
         var hm;
         if (_screen == 2) {
@@ -127,29 +127,8 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function _pushScreenMenu() {
-        var labels;
-        var symbols;
-
-        if (_screen == 1) {
-            labels = ["Undo last", "Start", "History", "History(all)", "Settings", "About"];
-            symbols = [:undoLast, :start, :history, :historyAll, :settings, :about];
-        } else if (_screen == 2) {
-            labels = ["Undo last", "Add diaper", "History", "History(all)", "Settings", "About"];
-            symbols = [:undoLast, :addDiaper, :history, :historyAll, :settings, :about];
-        } else {
-            labels = ["Undo last", "Item 1", "Item 2"];
-            symbols = [:undoLast, :item1, :item2];
-        }
-
-        var menuTitle = null;
-        if (_screen == 1) {
-            menuTitle = "Feeding";
-        } else if (_screen == 2) {
-            menuTitle = "Diaper";
-        }
-
-        var mv = new CustomMenuView(_screen, labels, symbols, menuTitle);
-        WatchUi.pushView(mv, new CustomMenuDelegate(mv), WatchUi.SLIDE_IMMEDIATE);
+        var menu = MainMenuBuilder.buildMainMenu(_screen);
+        WatchUi.pushView(menu, new BabyRoutineMenu2InputDelegate(_screen), WatchUi.SLIDE_UP);
     }
 
     function _goNext() {

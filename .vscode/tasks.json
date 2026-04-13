@@ -4,7 +4,7 @@
     {
       "label": "Garmin: Build (.prg)",
       "type": "shell",
-      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -o bin/BabyRoutine.prg -d ${config:garmin.deviceId}",
+      "command": "\"${workspaceFolder}/scripts/stamp-build-ref.sh\" && \"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -o bin/BabyRoutine.prg -d ${config:garmin.deviceId}",
       "windows": {
         "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -o bin/BabyRoutine.prg -d ${config:garmin.deviceId}"
       },
@@ -27,7 +27,7 @@
     {
       "label": "Garmin: Package (.iq, signed, store)",
       "type": "shell",
-      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -e -r -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\"",
+      "command": "\"${workspaceFolder}/scripts/stamp-build-ref.sh\" && \"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.jungle -e -r -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\"",
       "windows": {
         "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.jungle -e -r -o bin/BabyRoutine.iq -y \"${config:garmin.developerKeyPath}\""
       },
@@ -36,7 +36,7 @@
     {
       "label": "Garmin: Package test .iq (manifest.test.xml)",
       "type": "shell",
-      "command": "\"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.test.jungle -e -r -o bin/BabyRoutine-Test.iq -y \"${config:garmin.developerKeyPath}\"",
+      "command": "\"${workspaceFolder}/scripts/stamp-build-ref.sh\" && \"${config:garmin.connectIqSdkPath}/bin/monkeyc\" -f monkey.test.jungle -e -r -o bin/BabyRoutine-Test.iq -y \"${config:garmin.developerKeyPath}\"",
       "windows": {
         "command": "\"${config:garmin.connectIqSdkPath}\\\\bin\\\\monkeyc.bat\" -f monkey.test.jungle -e -r -o bin/BabyRoutine-Test.iq -y \"${config:garmin.developerKeyPath}\""
       },

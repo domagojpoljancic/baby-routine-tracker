@@ -1,3 +1,4 @@
+import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
 import Toybox.Time;
@@ -57,8 +58,9 @@ class FeedingFormatters {
             return null;
         }
 
-        var tStr = entry["t"];
-        var tSym = entry[:t];
+        var d = entry as Dictionary;
+        var tStr = d["t"];
+        var tSym = d[:t];
 
         if (tStr != null) {
             return tStr;
@@ -72,9 +74,10 @@ class FeedingFormatters {
             return null;
         }
 
-        var raw = entry["ts"];
+        var d = entry as Dictionary;
+        var raw = d["ts"];
         if (raw == null) {
-            raw = entry[:ts];
+            raw = d[:ts];
         }
         if (raw == null) {
             return null;
@@ -98,9 +101,11 @@ class FeedingFormatters {
         }
 
         var out = [];
+        var arr = list as Array;
         var i;
-        for (i = 0; i < list.size(); i += 1) {
-            var e = list[i];
+        var n = arr.size();
+        for (i = 0; i < n; i += 1) {
+            var e = arr[i];
             if (isFeedingTypeCode(entryType(e))) {
                 out.add(e);
             }
@@ -123,9 +128,11 @@ class FeedingFormatters {
         }
 
         var out = [];
+        var arr = list as Array;
         var i;
-        for (i = 0; i < list.size(); i += 1) {
-            var e = list[i];
+        var n = arr.size();
+        for (i = 0; i < n; i += 1) {
+            var e = arr[i];
             if (isDiaperTypeCode(entryType(e))) {
                 out.add(e);
             }

@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
 import Toybox.Timer;
@@ -10,7 +11,6 @@ class OnboardingOverlayView extends WatchUi.View {
     var _autoDismissTimer;
 
     function _chordHalfWidthAtY(w, h, y) {
-        var cx = w / 2;
         var cy = h / 2;
         var r = w;
         if (h < w) {
@@ -93,7 +93,7 @@ class OnboardingOverlayView extends WatchUi.View {
             Graphics.FONT_SMALL,
             Graphics.FONT_TINY,
             Graphics.FONT_XTINY
-        ];
+        ] as Array;
         var i;
         for (i = 0; i < fonts.size(); i++) {
             var f = fonts[i];

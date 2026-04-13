@@ -17,7 +17,6 @@ class HistoryItem extends WatchUi.CustomMenuItem {
         var fmt = new FeedingFormatters();
         var line = fmt.formatHistoryRowTimeFromTs(_normalizedTs) + " - " + fmt.typeLabel(fmt.entryType(_entry));
         var w = dc.getWidth();
-        var h = dc.getHeight();
         var cx = w / 2;
         var font = Graphics.FONT_SMALL;
         var fh = dc.getFontHeight(font);

@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.WatchUi;
 
 // About: centered title; body is left-aligned, scrollable (_scrollY) for long copy on round screens.
@@ -14,22 +15,29 @@ class AboutView extends WatchUi.View {
     }
 
     function _aboutLines() {
-        return [
+        var lines = [
             "Track baby routines",
             "Feeding & diaper",
             "",
             "Data on watch only",
             "No cloud, no sharing",
             "",
-            "MIT License"
+            "MIT License",
+            "",
+            "Version 0.0.8",
+            "Build local"
         ];
+        return lines;
     }
 
     function _bodyContentHeight(lines, fhBody, lineGap, paraGap) {
         var contentY = 0;
         var i;
-        for (i = 0; i < lines.size(); i += 1) {
-            var line = lines[i];
+        var linesArr = lines as Array;
+        var lineCount = linesArr.size();
+        for (i = 0; i < lineCount; i += 1) {
+            var idx = i;
+            var line = linesArr[idx];
             if (line.length() == 0) {
                 contentY += paraGap;
             } else {
@@ -104,8 +112,11 @@ class AboutView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         var contentY = 0;
         var i;
-        for (i = 0; i < lines.size(); i += 1) {
-            var line = lines[i];
+        var linesArr2 = lines as Array;
+        var lineCount2 = linesArr2.size();
+        for (i = 0; i < lineCount2; i += 1) {
+            var idx2 = i;
+            var line = linesArr2[idx2];
             if (line.length() == 0) {
                 contentY += paraGap;
                 continue;

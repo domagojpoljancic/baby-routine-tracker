@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Screen 2: diaper tracking (shared store; t=4).
@@ -27,24 +28,25 @@ class SecondScreenView extends WatchUi.View {
         var entries = _store.load();
         var diapers = _collectDiaperEntries(entries);
         _sortDiapersByTsDesc(diapers);
+        var diapersArr = diapers as Array;
 
         var mainRowText;
         var lower0;
         var lower1;
-        if (diapers.size() == 0) {
+        if (diapersArr.size() == 0) {
             mainRowText = "Start - Tap button";
             lower0 = "";
             lower1 = "";
         } else {
-            var latestTs = _fmt.entryTs(diapers[0]);
+            var latestTs = _fmt.entryTs(diapersArr[0]);
             mainRowText = _fmt.formatHmFromTs(latestTs) + " - Diaper";
-            if (diapers.size() >= 2) {
-                lower0 = "- " + _fmt.formatHmFromTs(_fmt.entryTs(diapers[1])) + " -";
+            if (diapersArr.size() >= 2) {
+                lower0 = "- " + _fmt.formatHmFromTs(_fmt.entryTs(diapersArr[1])) + " -";
             } else {
                 lower0 = "";
             }
-            if (diapers.size() >= 3) {
-                lower1 = "- " + _fmt.formatHmFromTs(_fmt.entryTs(diapers[2])) + " -";
+            if (diapersArr.size() >= 3) {
+                lower1 = "- " + _fmt.formatHmFromTs(_fmt.entryTs(diapersArr[2])) + " -";
             } else {
                 lower1 = "";
             }
@@ -73,8 +75,9 @@ class SecondScreenView extends WatchUi.View {
         if (entries == null) {
             return diapers;
         }
-        for (var i = 0; i < entries.size(); i++) {
-            var e = entries[i];
+        var entriesArr = entries as Array;
+        for (var i = 0; i < entriesArr.size(); i++) {
+            var e = entriesArr[i];
             var t = _fmt.entryType(e);
             if (t != null && t == 4) {
                 diapers.add(e);
@@ -84,15 +87,16 @@ class SecondScreenView extends WatchUi.View {
     }
 
     function _sortDiapersByTsDesc(diapers) {
-        var n = diapers.size();
+        var d = diapers as Array;
+        var n = d.size();
         for (var i = 0; i < n; i++) {
             for (var j = i + 1; j < n; j++) {
-                var ti = _fmt.entryTs(diapers[i]);
-                var tj = _fmt.entryTs(diapers[j]);
+                var ti = _fmt.entryTs(d[i]);
+                var tj = _fmt.entryTs(d[j]);
                 if (tj > ti) {
-                    var tmp = diapers[i];
-                    diapers[i] = diapers[j];
-                    diapers[j] = tmp;
+                    var tmp = d[i];
+                    d[i] = d[j];
+                    d[j] = tmp;
                 }
             }
         }

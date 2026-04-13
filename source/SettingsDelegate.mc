@@ -21,16 +21,4 @@ class SettingsDelegate extends WatchUi.BehaviorDelegate {
         }
         return false;
     }
-
-    function onTap(clickEvent) {
-        var c = clickEvent.getCoordinates();
-        if (_view.hitScrollInvertRow(c[0], c[1])) {
-            var store = new AppSettingsStore();
-            store.setScrollInvert(!store.scrollInvertEnabled());
-            HapticHelper.subtleActionPulse();
-            WatchUi.requestUpdate();
-            return true;
-        }
-        return false;
-    }
 }

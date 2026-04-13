@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.Time;
 import Toybox.Timer;
 import Toybox.WatchUi;
@@ -69,6 +70,7 @@ class HelloGarminView extends WatchUi.View {
         var circleRadius = (screenWidth < screenHeight ? screenWidth : screenHeight) / 2;
         var entries = _store.load();
         entries = _fmt.filterFeedingEntries(entries);
+        var entryList = entries as Array;
 
         // High-contrast base.
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
@@ -76,19 +78,19 @@ class HelloGarminView extends WatchUi.View {
         dc.fillCircle(centerX, centerY, circleRadius);
 
         var nowTs = Time.now().value();
-        var mainHP = _mainRowHighlightParts(nowTs, entries);
+        var mainHP = _mainRowHighlightParts(nowTs, entries) as Array;
         var mainText = mainHP[0] + mainHP[1];
-        var lowerTexts = _buildLowerRowTexts(entries);
+        var lowerTexts = _buildLowerRowTexts(entries) as Array;
 
         var highlightRowY = screenHeight * 58 / 100;
         var maxMainWidth = screenWidth * 94 / 100;
         var mainCenterX = screenWidth / 2 + screenWidth * 2 / 100;
 
         var highlightFont;
-        if (entries == null || entries.size() == 0) {
+        if (entryList.size() == 0) {
             highlightFont = _pickFittingFont(dc, mainText, [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY], maxMainWidth);
         } else {
-            highlightFont = _pickMainRowFont(dc, nowTs, entries, maxMainWidth);
+            highlightFont = _pickMainRowFont(dc, nowTs, entryList, maxMainWidth);
         }
 
         if (_flashCircleCode != null) {
@@ -221,20 +223,22 @@ class HelloGarminView extends WatchUi.View {
     }
 
     function _pickFittingFont(dc, text, fonts, maxWidth) {
-        for (var i = 0; i < fonts.size(); i += 1) {
-            var candidate = fonts[i];
+        var fa = fonts as Array;
+        for (var i = 0; i < fa.size(); i += 1) {
+            var candidate = fa[i];
             if (dc.getTextWidthInPixels(text, candidate) <= maxWidth) {
                 return candidate;
             }
         }
 
         // Fall back to smallest provided candidate if all are too wide.
-        return fonts[fonts.size() - 1];
+        return fa[fa.size() - 1];
     }
 
     // One font for the main row: must fit Left, Right, and Bottle for same time/timer (matches formatter labels).
     function _pickMainRowFont(dc, nowTs, entries, maxWidth) {
-        var latest = entries[entries.size() - 1];
+        var ent = entries as Array;
+        var latest = ent[ent.size() - 1];
         var latestTs = _fmt.entryTs(latest);
         var hhmm = _fmt.formatHmFromTs(latestTs);
         var elapsed = _fmt.elapsedWholeMinutes(nowTs, latestTs);
@@ -253,7 +257,7 @@ class HelloGarminView extends WatchUi.View {
             probeBottle = hhmm + " - Bottle";
         }
 
-        var fonts = [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY];
+        var fonts = [Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY] as Array;
         var i;
         for (i = 0; i < fonts.size(); i += 1) {
             var candidate = fonts[i];
@@ -281,11 +285,16 @@ class HelloGarminView extends WatchUi.View {
         var sec = Time.now().value();
         var timerUseWhite = (sec % 2) == 0;
 
-        if (entries == null || entries.size() == 0) {
+        if (entries == null) {
             return ["Tap L/Bottle/R", "", timerUseWhite];
         }
 
-        var latest = entries[entries.size() - 1];
+        var ent = entries as Array;
+        if (ent.size() == 0) {
+            return ["Tap L/Bottle/R", "", timerUseWhite];
+        }
+
+        var latest = ent[ent.size() - 1];
         var latestTs = _fmt.entryTs(latest);
         var baseLabel = _fmt.typeLabel(_fmt.entryType(latest));
         var hhmm = _fmt.formatHmFromTs(latestTs);
@@ -301,24 +310,30 @@ class HelloGarminView extends WatchUi.View {
     }
 
     function _buildMainRowText(nowTs, entries) {
-        var p = _mainRowHighlightParts(nowTs, entries);
+        var p = _mainRowHighlightParts(nowTs, entries) as Array;
         return p[0] + p[1];
     }
 
     function _buildLowerRowTexts(entries) {
-        var texts = ["", ""];
+        var texts = ["", ""] as Array;
 
-        if (entries == null || entries.size() == 0) {
+        if (entries == null) {
             texts[0] = "Recent History";
             return texts;
         }
 
-        var count = entries.size();
+        var ent = entries as Array;
+        if (ent.size() == 0) {
+            texts[0] = "Recent History";
+            return texts;
+        }
+
+        var count = ent.size();
         if (count >= 2) {
-            texts[0] = _fmt.formatHistoryLine(entries[count - 2]);
+            texts[0] = _fmt.formatHistoryLine(ent[count - 2]);
         }
         if (count >= 3) {
-            texts[1] = _fmt.formatHistoryLine(entries[count - 3]);
+            texts[1] = _fmt.formatHistoryLine(ent[count - 3]);
         }
 
         return texts;

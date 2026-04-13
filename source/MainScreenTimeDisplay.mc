@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.System;
 
 // Top clock for main screens (1 & 2) only. Uses System.getClockTime() and
@@ -37,7 +38,7 @@ class MainScreenTimeDisplay {
     }
 
     function draw(dc, screenWidth, screenHeight) {
-        var parts = getDisplayTimeParts();
+        var parts = getDisplayTimeParts() as Array;
         var timeText = parts[0];
         var amPmText = parts[1];
 

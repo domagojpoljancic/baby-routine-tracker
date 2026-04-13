@@ -1,5 +1,6 @@
 import Toybox.Application;
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
@@ -17,9 +18,10 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (entry == null) {
             return null;
         }
-        var raw = entry["ts"];
+        var d = entry as Dictionary;
+        var raw = d["ts"];
         if (raw == null) {
-            raw = entry[:ts];
+            raw = d[:ts];
         }
         if (raw == null) {
             return null;
@@ -31,9 +33,10 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (entry == null) {
             return null;
         }
-        var t = entry["t"];
+        var d = entry as Dictionary;
+        var t = d["t"];
         if (t == null) {
-            t = entry[:t];
+            t = d[:t];
         }
         return t;
     }
@@ -136,14 +139,18 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         var line1 = null;
         var line2 = null;
 
-        var isEmpty = (list == null || list.size() == 0);
+        var listArr = null;
+        if (list != null) {
+            listArr = list as Array;
+        }
+        var isEmpty = (listArr == null || listArr.size() == 0);
         if (isEmpty) {
             line1 = "No events";
         } else {
-            var n = list.size();
-            line1 = _formatGlanceLine(list[n - 1]);
+            var n = listArr.size();
+            line1 = _formatGlanceLine(listArr[n - 1]);
             if (n >= 2) {
-                line2 = _formatGlanceLine(list[n - 2]);
+                line2 = _formatGlanceLine(listArr[n - 2]);
             }
         }
 

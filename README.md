@@ -14,12 +14,12 @@ Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8df
 |------|----------|
 | **Feeding** | Log **Left**, **Bottle**, or **Right** from the main screen (touch targets where the device supports touch). Optional **Start** submenu in the menu lists the same three actions. |
 | **Diapers** | Log a diaper change from the **Diaper** screen button or **Add diaper** in the screen 2 menu. |
-| **Storage** | Event log: append-only list in `Application.Storage` under key `feedings_v1` (type code + timestamp). Preferences (e.g. scroll invert) use separate keys such as `settings_scroll_invert_v1`. |
+| **Storage** | Event log: append-only list in `Application.Storage` under key `feedings_v1` (type code + timestamp). |
 | **History** | **History** is filtered by screen (feeding-only vs diaper-only). **History(all)** shows the combined timeline. Grouped by day; newest first. |
 | **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
-| **Menu** | Custom list (**CustomMenuView**): swipe up/down or drag to move selection (clamped at first/last item — no wrap), tap or **Select** to activate, **Back** / **ESC** / **swipe right** to close. |
-| **Settings** | **Scroll invert** is **work in progress**: the toggle is stored (`settings_scroll_invert_v1`), but **inversion does not work correctly in the current build** (menu scrolling behaves as normal). A fix is planned. |
-| **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice. |
+| **Menu (main)** | Garmin **`WatchUi.Menu2`** built in `MainMenuBuilder` with **`Menu2InputDelegate`** handlers (`BabyRoutineMenu2InputDelegate`, `BabyRoutineStartMenuInputDelegate` for **Start**). Standard list navigation and transitions (**`SLIDE_UP`** push, **`SLIDE_DOWN`** pop to match stack). Same items as before: Undo, Start (Left / Bottle / Right), History, History(all), Settings, About on Feeding; Diaper screen swaps **Start** for **Add diaper**. |
+| **Settings** | **Placeholder** screen (“More options soon”) reachable from the menu; no persistent preferences in this build. |
+| **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice, plus static **version / build** lines maintained in `AboutView` (update manually when you cut a release). |
 | **Glance** | When the runtime supports `WatchUi.GlanceView`, the app shows title **Baby Routine**, the latest event line, and optionally the previous line. Both event lines share the same font tier: **TINY**, or **XTINY** if either line is wider than **94%** of the glance width (same rule as the empty-state line). |
 | **Time format** | Clock and history times follow the device **12h / 24h** setting. |
 
@@ -39,7 +39,7 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 **Important:** Declaring a product in the manifest does **not** mean it was tested on real hardware. Before a wide release, validate on the devices you care about. A **signed package** build (`.iq`) compiles for every device variant the SDK associates with those ids (progress lines like `N OUT OF M DEVICES BUILT` are normal).
 
-**Requirements:** `minApiLevel` **3.3.0** (touch/drag APIs used by the custom menu). Java runtime and the [Connect IQ SDK](https://developer.garmin.com/connect-iq/overview/) (`monkeyc`, `monkeydo`) are required to build.
+**Requirements:** `minApiLevel` **3.3.0**. Java runtime and the [Connect IQ SDK](https://developer.garmin.com/connect-iq/overview/) (`monkeyc`, `monkeydo`) are required to build.
 
 ---
 
@@ -47,7 +47,7 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### Screen 1 — Feeding
 
-- **First run (empty store):** about **one second** after the Feeding view appears, a short **onboarding overlay** dims the **upper half** and shows hints (**Menu »** / **« or left swipe**). It **auto-dismisses** after ~3s, or dismiss on tap (outside the menu hotspot), swipe, or most keys. Tapping the **menu hotspot**, **swipe left**, **Menu** key, or **Enter** dismisses the overlay and **opens the main menu** (same stack as normal navigation). Once any event exists in `feedings_v1`, the overlay is skipped.
+- **First run (empty store):** about **one second** after the Feeding view appears, a short **onboarding overlay** dims the **upper half** and shows hints (**Menu »** / **« or left swipe**). It **auto-dismisses** after ~3s, or dismiss on tap (outside the menu hotspot), swipe, or most keys. Tapping the **menu hotspot**, **swipe left**, **Menu** key, or **Enter** dismisses the overlay and **opens the main Menu2** (same stack as normal navigation). Once any event exists in `feedings_v1`, the overlay is skipped.
 - Three touch regions: **Left**, **Bottle**, **Right**.
 - Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
 - **Bottom half** tap opens **feeding-filtered** history.
@@ -73,7 +73,7 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### History
 
-Implemented with `WatchUi.CustomMenu`, scrollable lists, date headers, and empty states (**No feedings yet** / **No diapers yet** / **No entries yet**). Selecting a row closes the history view (see `HistoryDelegate`).
+Implemented with **`WatchUi.CustomMenu`** (history only — not the main app menu), scrollable lists, date headers, and empty states (**No feedings yet** / **No diapers yet** / **No entries yet**). Selecting a row closes the history view (see `HistoryDelegate`).
 
 ---
 
@@ -150,9 +150,9 @@ Start the **Connect IQ Simulator**, then (device id must match the `.prg` you bu
 
 ### IDE tasks
 
-`.vscode/tasks.json` includes **Build (.prg)**, **Run in Simulator**, **Package (.iq, signed, store)**, and **Package test .iq (manifest.test.xml)** → `bin/BabyRoutine-Test.iq`. Set `garmin.connectIqSdkPath`, `garmin.deviceId`, and `garmin.developerKeyPath` in `.vscode/settings.json` (template placeholders are committed).
+`.vscode/tasks.json` includes **Build (.prg)**, **Run in Simulator**, **Package (.iq, signed, store)**, and **Package test .iq (manifest.test.xml)** → `bin/BabyRoutine-Test.iq`. On macOS/Linux, build/package tasks run **`scripts/stamp-build-ref.sh`** first (placeholder hook for future stamping; version strings in **About** are still edited in code). Set `garmin.connectIqSdkPath`, `garmin.deviceId`, and `garmin.developerKeyPath` in `.vscode/settings.json` (template placeholders are committed).
 
-The default **Build (.prg)** task does **not** pass `-y`; the shell examples above do. If your SDK requires a key for `.prg` builds, add `-y` to the task or use the README commands.
+The default **Build (.prg)** task does **not** pass `-y`; the shell examples above do. If your SDK requires a key for `.prg` builds, add `-y` to the task or use the README commands. **Windows** task variants do not invoke the stamp script yet.
 
 ### Install caveats
 
@@ -176,16 +176,18 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 | `source/SecondScreenView.mc` | Diaper screen UI |
 | `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push; `openScreenMenu()` for programmatic open |
 | `source/OnboardingEligibility.mc`, `OnboardingOverlayView.mc`, `OnboardingOverlayDelegate.mc` | First-run hint when the event store is empty (Feeding screen) |
-| `source/CustomMenuView.mc`, `CustomMenuDelegate.mc`, `MenuHotspot.mc` | Custom menu |
+| `source/MenuHotspot.mc` | Menu icon hit-test + draw on main screens |
+| `source/menu/MainMenuBuilder.mc` | Builds **`WatchUi.Menu2`** trees for main and Start menus |
+| `source/menu/BabyRoutineMenu2InputDelegate.mc` | **`Menu2InputDelegate`** for main Feeding/Diaper menus |
+| `source/menu/BabyRoutineStartMenuInputDelegate.mc` | **`Menu2InputDelegate`** for **Start** (Left / Bottle / Right) |
 | `source/AboutView.mc`, `AboutDelegate.mc` | About screen |
-| `source/AppSettingsStore.mc` | App preferences in `Application.Storage` (separate from `feedings_v1`) |
-| `source/SettingsView.mc`, `SettingsDelegate.mc` | Settings UI (e.g. scroll invert) |
+| `source/SettingsView.mc`, `SettingsDelegate.mc` | Settings placeholder |
+| `scripts/stamp-build-ref.sh` | Optional pre-`monkeyc` hook from VS Code tasks (macOS/Linux) |
 | `source/FeedingStore.mc`, `FeedingFormatters.mc`, `FeedingActions.mc` | Persistence and feeding actions |
 | `source/DiaperActions.mc`, `DiaperTouchLayout.mc` | Diaper logging |
 | `source/history/*` | History menu construction and rows |
 | `source/BabyRoutineGlanceView.mc` | Glance |
 | `source/HapticHelper.mc` | Vibration helper |
-| `source/menu/MainMenuBuilder.mc`, `BabyRoutineMenu2InputDelegate.mc` | **Unused in v1.0** (reference only) |
 | `source/ThirdScreenView.mc` | Unused placeholder view |
 
 ---
@@ -197,7 +199,7 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 - **English only** (`eng`) in the manifest languages section.
 - Prepare store screenshots and descriptions separately; they are not generated from this repo.
 - After changing `manifest.xml` products, re-run a full **`-e`** package build before submission; update **`manifest.test.xml`** products to match if you ship a test build too.
-- **Scroll invert** (Settings): treat as **placeholder / WIP** until a release note says otherwise; the current build does not apply inversion reliably.
+- Keep **`AboutView`** version / build lines in sync with what you publish (they are not auto-generated from Git in this repo).
 
 ---
 
@@ -209,11 +211,13 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 
 ## Status and roadmap
 
-**v1.0** is intended as a complete minimal product: two main screens, shared storage, history, undo, glance, About, and haptics where supported.
+**`develop` is work-in-progress:** behavior and UI change without a stability guarantee until merged to **`main`** and tagged for release. Treat simulator checks as necessary but not sufficient; validate on hardware you ship to.
 
-**Develop branch / unreleased work:** Verified in the **Connect IQ simulator** where noted; **not fully validated on a physical watch**. **Scroll invert** in Settings is **WIP** and **non-functional** in the current code path despite the toggle. Run a hardware pass before merging to `main` or submitting a store build.
+**Recent direction on `develop`:** the **custom canvas main menu** was **removed** in favor of Garmin **`Menu2`**; the experimental **scroll-invert** setting and **`AppSettingsStore`** were **dropped**. **Settings** is a **placeholder** until real options land.
 
-**Not in v1.0:** Third main screen and the unused `Menu2` scaffolding in `source/menu/`. Settings may grow beyond scroll invert in a future version. History UI may receive polish based on feedback.
+**v1.0** on `main` was intended as a minimal product baseline; `develop` may diverge (e.g. Menu2, About version footer, build stamp hook) until the next release merge.
+
+**Not in scope yet:** third main screen (`ThirdScreenView` placeholder only). History UI may receive polish based on feedback.
 
 ---
 

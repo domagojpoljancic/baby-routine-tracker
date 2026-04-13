@@ -1,4 +1,5 @@
 import Toybox.Application;
+import Toybox.Lang;
 import Toybox.Time;
 
 // Persistent, append-only feeding entry store backed by Application Storage.
@@ -52,9 +53,10 @@ class FeedingStore {
             return null;
         }
 
-        var v = entry["t"];
+        var d = entry as Dictionary;
+        var v = d["t"];
         if (v == null) {
-            v = entry[:t];
+            v = d[:t];
         }
         if (v == null) {
             return null;
@@ -74,9 +76,11 @@ class FeedingStore {
             return false;
         }
 
+        var listArr = list as Array;
+        var listSz = listArr.size();
         var i;
-        for (i = list.size() - 1; i >= 0; i -= 1) {
-            var t = _entryTypeCode(list[i]);
+        for (i = listSz - 1; i >= 0; i -= 1) {
+            var t = _entryTypeCode(listArr[i]);
             if (t == null) {
                 continue;
             }
@@ -91,9 +95,9 @@ class FeedingStore {
             if (match) {
                 var newList = [];
                 var k;
-                for (k = 0; k < list.size(); k += 1) {
+                for (k = 0; k < listSz; k += 1) {
                     if (k != i) {
-                        newList.add(list[k]);
+                        newList.add(listArr[k]);
                     }
                 }
                 Application.Storage.setValue(STORAGE_KEY, newList);
