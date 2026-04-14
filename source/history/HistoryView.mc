@@ -68,7 +68,8 @@ class HistoryView {
                 continue;
             }
             if (dk != prevDayKey) {
-                menu.addItem(new HistoryDateHeader(normalizedTs, prevDayKey == -1));
+                var dayCount = HistoryView._countEntriesForDayFrom(ordered, i, dk, fmt);
+                menu.addItem(new HistoryDateHeader(normalizedTs, prevDayKey == -1, dayCount));
                 prevDayKey = dk;
             }
 
@@ -104,6 +105,28 @@ class HistoryView {
         var dk = info.year * 10000 + info.month * 100 + info.day;
 
         return dk;
+    }
+
+    static function _countEntriesForDayFrom(ordered, startIndex, dayKey, fmt) {
+        var count = 0;
+        var n = ordered.size();
+        var i;
+        for (i = startIndex; i < n; i += 1) {
+            var entry = ordered[i];
+            var ts = fmt.entryTs(entry);
+            if (ts == null) {
+                continue;
+            }
+            var currentDay = HistoryView._dayKey(ts);
+            if (currentDay == null) {
+                continue;
+            }
+            if (currentDay != dayKey) {
+                break;
+            }
+            count += 1;
+        }
+        return count;
     }
 }
 

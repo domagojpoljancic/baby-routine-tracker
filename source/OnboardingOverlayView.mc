@@ -115,7 +115,7 @@ class OnboardingOverlayView extends WatchUi.View {
             _autoDismissTimer = null;
         }
         _autoDismissTimer = new Timer.Timer();
-        _autoDismissTimer.start(self.method(:onAutoDismiss), 3000, false);
+        _autoDismissTimer.start(self.method(:onAutoDismiss), 2000, false);
     }
 
     function onHide() {
@@ -126,6 +126,7 @@ class OnboardingOverlayView extends WatchUi.View {
     }
 
     function onAutoDismiss() as Void {
+        (new OnboardingHintStore()).markMenuHelperSeen();
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 

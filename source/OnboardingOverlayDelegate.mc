@@ -11,12 +11,13 @@ class OnboardingOverlayDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function _dismiss() {
+        (new OnboardingHintStore()).markMenuHelperSeen();
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 
     function _dismissAndOpenMenu() {
         _dismiss();
-        (new CircularNavDelegate(_screen)).openScreenMenu();
+        (new CircularNavDelegate(_screen, :stack)).openScreenMenu();
     }
 
     function onTap(clickEvent) {

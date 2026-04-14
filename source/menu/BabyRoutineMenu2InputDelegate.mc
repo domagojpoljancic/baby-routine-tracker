@@ -56,8 +56,7 @@ class BabyRoutineMenu2InputDelegate extends WatchUi.Menu2InputDelegate {
 
         if (id == :settings) {
             HapticHelper.subtleActionPulse();
-            var sv = new SettingsView();
-            WatchUi.pushView(sv, new SettingsDelegate(sv), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(SettingsView.buildMenu(), new SettingsDelegate(_screen), WatchUi.SLIDE_IMMEDIATE);
             return;
         }
 
@@ -65,6 +64,13 @@ class BabyRoutineMenu2InputDelegate extends WatchUi.Menu2InputDelegate {
             HapticHelper.subtleActionPulse();
             var aboutView = new AboutView();
             WatchUi.pushView(aboutView, new AboutDelegate(aboutView), WatchUi.SLIDE_IMMEDIATE);
+            return;
+        }
+
+        if (id == :howItWorks) {
+            HapticHelper.subtleActionPulse();
+            var howItWorksView = new HowItWorksView();
+            WatchUi.pushView(howItWorksView, new HowItWorksDelegate(howItWorksView), WatchUi.SLIDE_IMMEDIATE);
             return;
         }
 

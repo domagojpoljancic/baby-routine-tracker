@@ -24,7 +24,7 @@ class AboutView extends WatchUi.View {
             "",
             "MIT License",
             "",
-            "Version 0.0.8",
+            "Version 0.0.9",
             "Build local"
         ];
         return lines;

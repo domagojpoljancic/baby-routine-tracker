@@ -8,10 +8,15 @@ import Toybox.WatchUi;
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
+    var _navMode;
 
-    function initialize(screen) {
+    function initialize(screen, navMode) {
         BehaviorDelegate.initialize();
         _screen = screen;
+        _navMode = navMode;
+        if (_navMode == null) {
+            _navMode = :stack;
+        }
     }
 
     function onSwipe(swipeEvent) {
@@ -127,6 +132,7 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function _pushScreenMenu() {
+        (new OnboardingHintStore()).markMenuHelperSeen();
         var menu = MainMenuBuilder.buildMainMenu(_screen);
         WatchUi.pushView(menu, new BabyRoutineMenu2InputDelegate(_screen), WatchUi.SLIDE_UP);
     }
@@ -134,11 +140,19 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
     function _goNext() {
         if (_screen == 1) {
             HapticHelper.subtleActionPulse();
-            WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new SecondScreenView(), new CircularNavDelegate(2, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2, :stack), WatchUi.SLIDE_IMMEDIATE);
+            }
         } else if (_screen == 2) {
-            // v1.0: two-screen flow only (no third screen).
             HapticHelper.subtleActionPulse();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new HelloGarminView(), new CircularNavDelegate(1, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                // v1.0: two-screen flow only (no third screen).
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            }
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -147,12 +161,20 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     function _goPrev() {
         if (_screen == 1) {
-            // v1.0: two-screen flow only (no third screen).
             HapticHelper.subtleActionPulse();
-            WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new SecondScreenView(), new CircularNavDelegate(2, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                // v1.0: two-screen flow only (no third screen).
+                WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2, :stack), WatchUi.SLIDE_IMMEDIATE);
+            }
         } else if (_screen == 2) {
             HapticHelper.subtleActionPulse();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new HelloGarminView(), new CircularNavDelegate(1, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            }
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }

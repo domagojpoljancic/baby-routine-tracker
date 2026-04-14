@@ -35,7 +35,7 @@ class HelloGarminView extends WatchUi.View {
         if (_onboardingDelayStarted) {
             return;
         }
-        if ((new OnboardingEligibility()).hasAnyEntry()) {
+        if ((new OnboardingHintStore()).isMenuHelperSeen()) {
             _onboardingDelayStarted = true;
             return;
         }
@@ -46,7 +46,7 @@ class HelloGarminView extends WatchUi.View {
 
     // Timer callback must be an instance method; self.method yields Method() as Void for Timer.start.
     function onboardingDeferredPush() as Void {
-        if ((new OnboardingEligibility()).hasAnyEntry()) {
+        if ((new OnboardingHintStore()).isMenuHelperSeen()) {
             return;
         }
         WatchUi.pushView(new OnboardingOverlayView(), new OnboardingOverlayDelegate(_screenIndex), WatchUi.SLIDE_IMMEDIATE);

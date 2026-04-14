@@ -1,24 +1,18 @@
 import Toybox.WatchUi;
 
-class SettingsDelegate extends WatchUi.BehaviorDelegate {
+class SettingsDelegate extends WatchUi.Menu2InputDelegate {
 
-    var _view;
+    var _screen;
 
-    function initialize(view) {
-        BehaviorDelegate.initialize();
-        _view = view;
+    function initialize(screen) {
+        Menu2InputDelegate.initialize();
+        _screen = screen;
     }
 
-    function onBack() {
-        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-        return true;
-    }
-
-    function onKey(keyEvent) {
-        if (keyEvent.getKey() == WatchUi.KEY_ESC) {
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-            return true;
+    function onSelect(item) {
+        var id = item.getId();
+        if (id == :defaultScreen) {
+            WatchUi.pushView(DefaultScreenSettingView.buildMenu(), new DefaultScreenSettingDelegate(_screen), WatchUi.SLIDE_UP);
         }
-        return false;
     }
 }

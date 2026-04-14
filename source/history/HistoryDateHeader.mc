@@ -7,11 +7,13 @@ class HistoryDateHeader extends WatchUi.CustomMenuItem {
 
     var _ts;
     var _firstHeader;
+    var _dayCount;
 
-    function initialize(ts, firstHeader) {
+    function initialize(ts, firstHeader, dayCount) {
         CustomMenuItem.initialize(null, {});
         _ts = ts;
         _firstHeader = firstHeader;
+        _dayCount = dayCount;
     }
 
     function draw(dc) {
@@ -21,7 +23,7 @@ class HistoryDateHeader extends WatchUi.CustomMenuItem {
 
         var moment = new Time.Moment(_ts);
         var info = Time.Gregorian.info(moment, Time.FORMAT_LONG);
-        var dateStr = info.day.toString() + " " + info.month.toString() + " " + info.year.toString();
+        var dateStr = info.day.toString() + " " + info.month.toString() + " " + info.year.toString() + " - #" + _dayCount.toString();
 
         var font = Graphics.FONT_XTINY;
         var fh = dc.getFontHeight(font);

@@ -19,6 +19,7 @@ class MainMenuBuilder {
             menu.addItem(new MenuItem("History", null, :history, {}));
             menu.addItem(new MenuItem("History(all)", null, :historyAll, {}));
             menu.addItem(new MenuItem("Settings", null, :settings, {}));
+            menu.addItem(new MenuItem("How it works", null, :howItWorks, {}));
             menu.addItem(new MenuItem("About", null, :about, {}));
         } else if (screen == 2) {
             menu.addItem(new MenuItem("Undo last", null, :undoLast, {}));
@@ -26,6 +27,7 @@ class MainMenuBuilder {
             menu.addItem(new MenuItem("History", null, :history, {}));
             menu.addItem(new MenuItem("History(all)", null, :historyAll, {}));
             menu.addItem(new MenuItem("Settings", null, :settings, {}));
+            menu.addItem(new MenuItem("How it works", null, :howItWorks, {}));
             menu.addItem(new MenuItem("About", null, :about, {}));
         } else {
             menu.addItem(new MenuItem("Undo last", null, :undoLast, {}));

@@ -14,12 +14,13 @@ Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8df
 |------|----------|
 | **Feeding** | Log **Left**, **Bottle**, or **Right** from the main screen (touch targets where the device supports touch). Optional **Start** submenu in the menu lists the same three actions. |
 | **Diapers** | Log a diaper change from the **Diaper** screen button or **Add diaper** in the screen 2 menu. |
-| **Storage** | Event log: append-only list in `Application.Storage` under key `feedings_v1` (type code + timestamp). |
+| **Storage** | Event log: append-only list in `Application.Storage` under key `feedings_v1` (type code + timestamp). Preferences: `default_screen_v1` (which screen opens first), `menu_helper_seen_v1` (menu-hint overlay dismissed). |
 | **History** | **History** is filtered by screen (feeding-only vs diaper-only). **History(all)** shows the combined timeline. Grouped by day; newest first. |
 | **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
-| **Menu (main)** | Garmin **`WatchUi.Menu2`** built in `MainMenuBuilder` with **`Menu2InputDelegate`** handlers (`BabyRoutineMenu2InputDelegate`, `BabyRoutineStartMenuInputDelegate` for **Start**). Standard list navigation and transitions (**`SLIDE_UP`** push, **`SLIDE_DOWN`** pop to match stack). Same items as before: Undo, Start (Left / Bottle / Right), History, History(all), Settings, About on Feeding; Diaper screen swaps **Start** for **Add diaper**. |
-| **Settings** | **Placeholder** screen (“More options soon”) reachable from the menu; no persistent preferences in this build. |
-| **About** | Scrollable on-device copy: what the app does, privacy summary, MIT notice, plus static **version / build** lines maintained in `AboutView` (update manually when you cut a release). |
+| **Menu (main)** | Garmin **`WatchUi.Menu2`** from `MainMenuBuilder` with **`BabyRoutineMenu2InputDelegate`** (and **`BabyRoutineStartMenuInputDelegate`** for **Start**). Items: Undo, Start (Left / Bottle / Right) or **Add diaper**, History, History(all), **Settings**, **How it works**, About. Transitions: **`SLIDE_UP`** / **`SLIDE_DOWN`** on push/pop. |
+| **Settings** | **`Menu2`** with **Default screen** → choose **Feeding** or **Diaper** as the app entry screen (`default_screen_v1` in storage). |
+| **How it works** | Scrollable help view (`HowItWorksView` / `HowItWorksDelegate`) from the main menu. |
+| **About** | Scrollable copy: purpose, privacy summary, MIT notice, plus manual **version / build** lines in `AboutView`. |
 | **Glance** | When the runtime supports `WatchUi.GlanceView`, the app shows title **Baby Routine**, the latest event line, and optionally the previous line. Both event lines share the same font tier: **TINY**, or **XTINY** if either line is wider than **94%** of the glance width (same rule as the empty-state line). |
 | **Time format** | Clock and history times follow the device **12h / 24h** setting. |
 
@@ -47,24 +48,23 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### Screen 1 — Feeding
 
-- **First run (empty store):** about **one second** after the Feeding view appears, a short **onboarding overlay** dims the **upper half** and shows hints (**Menu »** / **« or left swipe**). It **auto-dismisses** after ~3s, or dismiss on tap (outside the menu hotspot), swipe, or most keys. Tapping the **menu hotspot**, **swipe left**, **Menu** key, or **Enter** dismisses the overlay and **opens the main Menu2** (same stack as normal navigation). Once any event exists in `feedings_v1`, the overlay is skipped.
+- **Menu hint (first times):** if the user has **not** yet dismissed the hint (flag in `Application.Storage`, `menu_helper_seen_v1`), about **one second** after the **Feeding** view appears an **onboarding overlay** dims the **upper half** with **Menu »** / **« or left swipe**. It **auto-dismisses** after ~2s (and marks the hint seen), or dismiss via tap / swipe / most keys. **Menu hotspot**, **swipe left**, **Menu** key, or **Enter** can open the main **Menu2** after dismiss. **Note:** this is **not** tied to an empty event log—existing users upgrading without the flag may see the hint once.
 - Three touch regions: **Left**, **Bottle**, **Right**.
 - Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
 - **Bottom half** tap opens **feeding-filtered** history.
-- **Menu** (hotspot, **Menu** key, or **swipe left**): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, About.
+- **Menu** (hotspot, **Menu** key, or **swipe left**): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, How it works, About.
 
 ### Screen 2 — Diaper
 
 - **Diaper** button logs a change; **Add diaper** in the menu does the same and closes the menu.
 - Rows show **diaper** entries only (type 4).
 - **Bottom half** tap opens **diaper-filtered** history.
-- Menu: Undo last, Add diaper, History, History(all), Settings, About (open via hotspot, **Menu** key, or **swipe left**).
+- Menu: Undo last, Add diaper, History, History(all), Settings, How it works, About (open via hotspot, **Menu** key, or **swipe left**).
 
 ### Navigation between screens
 
 - **Swipe left** on the Feeding or Diaper screen opens the **same menu** as the hotspot / **Menu** key (does not switch screens).
-- **Swipe up** or **Next** behavior: Feeding → Diaper → (from Diaper) back to Feeding by popping to the first screen in the stack.
-- **Swipe down** or **Previous** behavior: the inverse pattern.
+- **Swipe up** / **Next** and **swipe down** / **Previous** switch between Feeding and Diaper. Implementation uses **`WatchUi.pushView` / `popView`** when the flow started from **Feeding** (`:stack` delegate) and **`WatchUi.switchToView`** when the app **opened on Diaper** or after changing the **default screen** in Settings (`:switch` delegate)—behavior should be verified on hardware for stack depth and back key.
 - **Screen indicator** (side dots): **two** dots for the two live screens.
 
 ### Screen 3
@@ -73,7 +73,7 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### History
 
-Implemented with **`WatchUi.CustomMenu`** (history only — not the main app menu), scrollable lists, date headers, and empty states (**No feedings yet** / **No diapers yet** / **No entries yet**). Selecting a row closes the history view (see `HistoryDelegate`).
+Implemented with **`WatchUi.CustomMenu`** (history only), scrollable lists, date headers (**day label** plus **entry count** for that day), and empty states (**No feedings yet** / **No diapers yet** / **No entries yet**). Selecting a row closes the history view (see `HistoryDelegate`).
 
 ---
 
@@ -174,14 +174,18 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 | `source/HelloGarminApp.mc` | Entry point class (**HelloGarminApp** — name kept for stable manifest `entry`); `getGlanceView()` |
 | `source/HelloGarminView.mc` | Feeding screen UI |
 | `source/SecondScreenView.mc` | Diaper screen UI |
-| `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push; `openScreenMenu()` for programmatic open |
-| `source/OnboardingEligibility.mc`, `OnboardingOverlayView.mc`, `OnboardingOverlayDelegate.mc` | First-run hint when the event store is empty (Feeding screen) |
+| `source/AppNavigation.mc` | `CircularNavDelegate`: swipe/key navigation, menu push, optional `:stack` vs `:switch` mode; `openScreenMenu()` |
+| `source/OnboardingHintStore.mc` | Persists whether the menu-hint overlay was dismissed |
+| `source/OnboardingOverlayView.mc`, `OnboardingOverlayDelegate.mc` | Menu-hint overlay (Feeding screen) |
+| `source/AppSettingsStore.mc` | Default startup screen (`default_screen_v1`) |
+| `source/SettingsView.mc`, `SettingsDelegate.mc` | Settings **`Menu2`** root; delegate pushes default-screen submenu |
+| `source/DefaultScreenSettingView.mc`, `DefaultScreenSettingDelegate.mc` | Feeding vs Diaper default; may `switchToView` root |
+| `source/HowItWorksView.mc`, `HowItWorksDelegate.mc` | Help copy + scroll |
 | `source/MenuHotspot.mc` | Menu icon hit-test + draw on main screens |
 | `source/menu/MainMenuBuilder.mc` | Builds **`WatchUi.Menu2`** trees for main and Start menus |
 | `source/menu/BabyRoutineMenu2InputDelegate.mc` | **`Menu2InputDelegate`** for main Feeding/Diaper menus |
 | `source/menu/BabyRoutineStartMenuInputDelegate.mc` | **`Menu2InputDelegate`** for **Start** (Left / Bottle / Right) |
 | `source/AboutView.mc`, `AboutDelegate.mc` | About screen |
-| `source/SettingsView.mc`, `SettingsDelegate.mc` | Settings placeholder |
 | `scripts/stamp-build-ref.sh` | Optional pre-`monkeyc` hook from VS Code tasks (macOS/Linux) |
 | `source/FeedingStore.mc`, `FeedingFormatters.mc`, `FeedingActions.mc` | Persistence and feeding actions |
 | `source/DiaperActions.mc`, `DiaperTouchLayout.mc` | Diaper logging |
@@ -211,13 +215,9 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 
 ## Status and roadmap
 
-**`develop` is work-in-progress:** behavior and UI change without a stability guarantee until merged to **`main`** and tagged for release. Treat simulator checks as necessary but not sufficient; validate on hardware you ship to.
+**`develop`** carries the current product line: **`Menu2`** main menus, **menu-hint overlay** (`OnboardingHintStore`), **default startup screen** in Settings, **How it works** help, **history** day headers with counts, **swipe-left** menu, **test** packaging (`manifest.test.xml`), and **glance** / typing hardening from earlier commits. Treat **`main`** as the last merged release baseline; merge **`develop` → `main`** when you are ready to tag and publish.
 
-**Recent direction on `develop`:** the **custom canvas main menu** was **removed** in favor of Garmin **`Menu2`**; the experimental **scroll-invert** setting and **`AppSettingsStore`** were **dropped**. **Settings** is a **placeholder** until real options land.
-
-**v1.0** on `main` was intended as a minimal product baseline; `develop` may diverge (e.g. Menu2, About version footer, build stamp hook) until the next release merge.
-
-**Not in scope yet:** third main screen (`ThirdScreenView` placeholder only). History UI may receive polish based on feedback.
+**Not in scope yet:** third main screen (`ThirdScreenView` placeholder only). Further history UI polish as needed.
 
 ---
 
