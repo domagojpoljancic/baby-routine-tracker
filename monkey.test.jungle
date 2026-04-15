@@ -1,0 +1,6 @@
+# Store test/beta package: uses manifest.test.xml (different application id from production).
+# Production: monkey.jungle + manifest.xml → BabyRoutine.iq
+# Test:       monkey.test.jungle + manifest.test.xml → BabyRoutine-Test.iq
+project.manifest = manifest.test.xml
+base.sourcePath = source
+base.resourcePath = resources

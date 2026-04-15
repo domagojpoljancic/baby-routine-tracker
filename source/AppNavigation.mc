@@ -2,20 +2,29 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
-// Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. Circular via push/pop stack.
-// onTap order — screen 1: menu hotspot, L/B/R circles, bottom half → filtered History. Screen 2: menu, diaper button, bottom half → History.
-// Custom menu: onMenu, KEY_ENTER, hotspot tap — _pushScreenMenu(); KEY_ESC — popView (see reference MainDelegate).
+// Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. SWIPE_LEFT opens menu (same as menu key).
+// onTap order — screen 1: L/B/R circles, bottom half → filtered History. Screen 2: diaper button, bottom half → History.
+// Main menus: Garmin Menu2 + Menu2InputDelegate (same pattern as breastfeed-tracker). onMenu + KEY_ENTER — _pushScreenMenu().
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
+    var _navMode;
 
-    function initialize(screen) {
+    function initialize(screen, navMode) {
         BehaviorDelegate.initialize();
         _screen = screen;
+        _navMode = navMode;
+        if (_navMode == null) {
+            _navMode = :stack;
+        }
     }
 
     function onSwipe(swipeEvent) {
         var dir = swipeEvent.getDirection();
+        if (dir == WatchUi.SWIPE_LEFT) {
+            _pushScreenMenu();
+            return true;
+        }
         if (dir == WatchUi.SWIPE_UP) {
             _goNext();
             return true;
@@ -32,12 +41,6 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         var ds = System.getDeviceSettings();
         var x = c[0];
         var y = c[1];
-
-        if (new MenuHotspot().hitTest(x, y, ds.screenWidth, ds.screenHeight)) {
-            _pushScreenMenu();
-            return true;
-        }
-
         var h = ds.screenHeight;
 
         if (_screen == 1) {
@@ -72,7 +75,7 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         return false;
     }
 
-    // Same History modes as CustomMenuDelegate :history (not History(all)).
+    // Same History modes as main menu :history (not History(all)).
     function _openScreenFilteredHistory() {
         var hm;
         if (_screen == 2) {
@@ -117,42 +120,33 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    // Called after onboarding overlay pops so menu opens (same as hotspot / SWIPE_LEFT / KEY_ENTER).
+    function openScreenMenu() {
+        _pushScreenMenu();
+    }
+
     function _pushScreenMenu() {
-        var labels;
-        var symbols;
-
-        if (_screen == 1) {
-            // v1.0: Settings not exposed in menu (future release).
-            labels = ["Undo last", "Start", "History", "History(all)", "About"];
-            symbols = [:undoLast, :start, :history, :historyAll, :about];
-        } else if (_screen == 2) {
-            // v1.0: Settings not exposed in menu (future release).
-            labels = ["Undo last", "Add diaper", "History", "History(all)", "About"];
-            symbols = [:undoLast, :addDiaper, :history, :historyAll, :about];
-        } else {
-            labels = ["Undo last", "Item 1", "Item 2"];
-            symbols = [:undoLast, :item1, :item2];
-        }
-
-        var menuTitle = null;
-        if (_screen == 1) {
-            menuTitle = "Feeding";
-        } else if (_screen == 2) {
-            menuTitle = "Diaper";
-        }
-
-        var mv = new CustomMenuView(_screen, labels, symbols, menuTitle);
-        WatchUi.pushView(mv, new CustomMenuDelegate(mv), WatchUi.SLIDE_IMMEDIATE);
+        (new OnboardingHintStore()).markMenuHelperSeen();
+        var menu = MainMenuBuilder.buildMainMenu(_screen);
+        WatchUi.pushView(menu, new BabyRoutineMenu2InputDelegate(_screen), WatchUi.SLIDE_UP);
     }
 
     function _goNext() {
         if (_screen == 1) {
             HapticHelper.subtleActionPulse();
-            WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new SecondScreenView(), new CircularNavDelegate(2, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2, :stack), WatchUi.SLIDE_IMMEDIATE);
+            }
         } else if (_screen == 2) {
-            // v1.0: two-screen flow only (no third screen).
             HapticHelper.subtleActionPulse();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new HelloGarminView(), new CircularNavDelegate(1, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                // v1.0: two-screen flow only (no third screen).
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            }
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -161,12 +155,20 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     function _goPrev() {
         if (_screen == 1) {
-            // v1.0: two-screen flow only (no third screen).
             HapticHelper.subtleActionPulse();
-            WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2), WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new SecondScreenView(), new CircularNavDelegate(2, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                // v1.0: two-screen flow only (no third screen).
+                WatchUi.pushView(new SecondScreenView(), new CircularNavDelegate(2, :stack), WatchUi.SLIDE_IMMEDIATE);
+            }
         } else if (_screen == 2) {
             HapticHelper.subtleActionPulse();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            if (_navMode == :switch) {
+                WatchUi.switchToView(new HelloGarminView(), new CircularNavDelegate(1, :switch), WatchUi.SLIDE_IMMEDIATE);
+            } else {
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            }
         } else {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }

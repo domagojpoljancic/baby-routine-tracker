@@ -1,5 +1,6 @@
 import Toybox.Application;
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
@@ -17,9 +18,10 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (entry == null) {
             return null;
         }
-        var raw = entry["ts"];
+        var d = entry as Dictionary;
+        var raw = d["ts"];
         if (raw == null) {
-            raw = entry[:ts];
+            raw = d[:ts];
         }
         if (raw == null) {
             return null;
@@ -31,9 +33,10 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (entry == null) {
             return null;
         }
-        var t = entry["t"];
+        var d = entry as Dictionary;
+        var t = d["t"];
         if (t == null) {
-            t = entry[:t];
+            t = d[:t];
         }
         return t;
     }
@@ -98,9 +101,25 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         return _formatTimeFromTs(_entryTs(entry)) + " - " + _typeLabel(_entryType(entry));
     }
 
+    // Same rule as main branch: TINY first, XTINY only if wider than 94% of full glance width.
+    // Using full canvas width for the measure (not a reduced text column) is what keeps entries large.
     function _rowFontFor(dc, w, text) {
+        var maxW = w * 94 / 100;
         var f = Graphics.FONT_TINY;
-        if (dc.getTextWidthInPixels(text, f) > w * 94 / 100) {
+        if (dc.getTextWidthInPixels(text, f) > maxW) {
+            f = Graphics.FONT_XTINY;
+        }
+        return f;
+    }
+
+    // One font for both event rows (same TINY/XTINY tier) so line widths don’t mix sizes.
+    function _eventFontForGlance(dc, w, text1, text2) {
+        var maxW = w * 94 / 100;
+        var f = Graphics.FONT_TINY;
+        if (dc.getTextWidthInPixels(text1, f) > maxW) {
+            f = Graphics.FONT_XTINY;
+        }
+        if (text2 != null && dc.getTextWidthInPixels(text2, f) > maxW) {
             f = Graphics.FONT_XTINY;
         }
         return f;
@@ -120,18 +139,37 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         var line1 = null;
         var line2 = null;
 
-        if (list == null || list.size() == 0) {
+        var listArr = null;
+        if (list != null) {
+            listArr = list as Array;
+        }
+        var isEmpty = (listArr == null || listArr.size() == 0);
+        if (isEmpty) {
             line1 = "No events";
         } else {
-            var n = list.size();
-            line1 = _formatGlanceLine(list[n - 1]);
+            var n = listArr.size();
+            line1 = _formatGlanceLine(listArr[n - 1]);
             if (n >= 2) {
-                line2 = _formatGlanceLine(list[n - 2]);
+                line2 = _formatGlanceLine(listArr[n - 2]);
             }
         }
 
-        var row1Font = _rowFontFor(dc, w, line1);
-        var row2Font = line2 != null ? _rowFontFor(dc, w, line2) : row1Font;
+        var padL = 12;
+        if (w < 200) {
+            padL = 10;
+        }
+
+        var eventFont;
+        if (isEmpty) {
+            eventFont = _rowFontFor(dc, w, line1);
+        } else if (line2 != null) {
+            eventFont = _eventFontForGlance(dc, w, line1, line2);
+        } else {
+            eventFont = _rowFontFor(dc, w, line1);
+        }
+
+        var row1Font = eventFont;
+        var row2Font = eventFont;
 
         var titleFh = dc.getFontHeight(titleFont);
         var row1Fh = dc.getFontHeight(row1Font);
@@ -146,30 +184,33 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
 
         var titleY = padTop + titleFh / 2;
         var row1Y = titleY + titleFh / 2 + gapTitle + row1Fh / 2;
+        if (isEmpty) {
+            row1Y += h * 7 / 100;
+        }
         var row2Y = row1Y + row1Fh / 2 + gapRows + row2Fh / 2;
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            w / 2,
+            padL,
             titleY,
             titleFont,
             titleText,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         dc.drawText(
-            w / 2,
+            padL,
             row1Y,
             row1Font,
             line1,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         if (line2 != null) {
             dc.drawText(
-                w / 2,
+                padL,
                 row2Y,
                 row2Font,
                 line2,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
             );
         }
     }

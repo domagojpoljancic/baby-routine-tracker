@@ -14,7 +14,11 @@ class HelloGarminApp extends Application.AppBase {
     }
 
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        return [ new HelloGarminView(), new CircularNavDelegate(1) ];
+        var defaultScreen = (new AppSettingsStore()).getDefaultScreen();
+        if (defaultScreen == 2) {
+            return [ new SecondScreenView(), new CircularNavDelegate(2, :switch) ];
+        }
+        return [ new HelloGarminView(), new CircularNavDelegate(1, :stack) ];
     }
 
     function getGlanceView() {

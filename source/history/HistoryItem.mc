@@ -17,19 +17,18 @@ class HistoryItem extends WatchUi.CustomMenuItem {
         var fmt = new FeedingFormatters();
         var line = fmt.formatHistoryRowTimeFromTs(_normalizedTs) + " - " + fmt.typeLabel(fmt.entryType(_entry));
         var w = dc.getWidth();
-        var h = dc.getHeight();
-        var left = w * 10 / 100;
+        var cx = w / 2;
         var font = Graphics.FONT_SMALL;
         var fh = dc.getFontHeight(font);
         var ty = 2 + fh / 2;
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            left,
+            cx,
             ty,
             font,
             line,
-            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
 }

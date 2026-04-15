@@ -1,4 +1,5 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
@@ -38,7 +39,7 @@ class HistoryView {
             feedings = (new FeedingFormatters()).filterFeedingEntries(feedings);
         }
 
-        var ordered = HistoryView._newestFirstOrder(feedings);
+        var ordered = HistoryView._newestFirstOrder(feedings) as Array;
         if (ordered.size() == 0) {
             if (mode == :diaperOnly) {
                 menu.addItem(new HistoryEmptyItem("No diapers yet"));
@@ -53,8 +54,10 @@ class HistoryView {
         var prevDayKey = -1;
         var fmt = new FeedingFormatters();
         var i;
-        for (i = 0; i < ordered.size(); i += 1) {
-            var entry = ordered[i];
+        var ordSize = ordered.size();
+        for (i = 0; i < ordSize; i += 1) {
+            var ii = i;
+            var entry = ordered[ii];
             var normalizedTs = fmt.entryTs(entry);
             if (normalizedTs == null) {
                 continue;
@@ -65,7 +68,8 @@ class HistoryView {
                 continue;
             }
             if (dk != prevDayKey) {
-                menu.addItem(new HistoryDateHeader(normalizedTs, prevDayKey == -1));
+                var dayCount = HistoryView._countEntriesForDayFrom(ordered, i, dk, fmt);
+                menu.addItem(new HistoryDateHeader(normalizedTs, prevDayKey == -1, dayCount));
                 prevDayKey = dk;
             }
 
@@ -77,10 +81,13 @@ class HistoryView {
 
     static function _newestFirstOrder(feedings) {
         var out = [];
-        var n = feedings.size();
+        var arr = feedings as Array;
+        var n = arr.size();
         var j;
         for (j = n - 1; j >= 0; j -= 1) {
-            out.add(feedings[j]);
+            var jj = j;
+            var entry = arr[jj];
+            out.add(entry);
         }
         return out;
     }
@@ -99,6 +106,28 @@ class HistoryView {
 
         return dk;
     }
+
+    static function _countEntriesForDayFrom(ordered, startIndex, dayKey, fmt) {
+        var count = 0;
+        var n = ordered.size();
+        var i;
+        for (i = startIndex; i < n; i += 1) {
+            var entry = ordered[i];
+            var ts = fmt.entryTs(entry);
+            if (ts == null) {
+                continue;
+            }
+            var currentDay = HistoryView._dayKey(ts);
+            if (currentDay == null) {
+                continue;
+            }
+            if (currentDay != dayKey) {
+                break;
+            }
+            count += 1;
+        }
+        return count;
+    }
 }
 
 class HistoryEmptyItem extends WatchUi.CustomMenuItem {
@@ -116,17 +145,16 @@ class HistoryEmptyItem extends WatchUi.CustomMenuItem {
 
     function draw(dc) {
         var w = dc.getWidth();
-        var h = dc.getHeight();
-        var left = w * 10 / 100;
+        var cx = w / 2;
 
         var fh = dc.getFontHeight(Graphics.FONT_SMALL);
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            left,
+            cx,
             2 + fh / 2,
             Graphics.FONT_SMALL,
             _message,
-            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
 }
