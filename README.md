@@ -30,7 +30,7 @@ Short **haptic** feedback is used on supported hardware for primary actions and 
 
 ## Device support
 
-The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`). As of v1.0 that list includes **40** explicit ids across families such as:
+The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`). As of v1.1 that list includes **40** explicit ids across families such as:
 
 - **fēnix** 6 / 7 / 8 (multiple SKUs), **fēnix E**
 - **Forerunner** 165, 255, 265, 570, 955, 965, 970 (including “Music” / size variants where listed)
@@ -69,7 +69,7 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### Screen 3
 
-`ThirdScreenView.mc` exists as a **placeholder** and is **not** connected to navigation in v1.0.
+`ThirdScreenView.mc` exists as a **placeholder** and is **not** connected to navigation in v1.1.
 
 ### History
 
