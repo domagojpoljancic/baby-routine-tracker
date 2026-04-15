@@ -61,7 +61,6 @@ class SecondScreenView extends WatchUi.View {
 
         _drawTime(dc, w, h);
         _drawDiaperButton(dc, w, h);
-        (new MenuHotspot()).draw(dc);
         _drawDivider(dc, w, h);
         _drawMainRow(dc, mainCenterX, highlightRowY, mainRowText);
         _drawSecondDivider(dc, w, h);

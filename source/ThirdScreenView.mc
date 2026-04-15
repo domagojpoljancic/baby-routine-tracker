@@ -27,8 +27,6 @@ class ThirdScreenView extends WatchUi.View {
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 
-        (new MenuHotspot()).draw(dc);
-
         var highlightRowY = h * 58 / 100;
         _screenDots.draw(dc, w, h, _screenIndex, highlightRowY);
     }

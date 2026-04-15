@@ -2,9 +2,9 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
-// Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. SWIPE_LEFT opens menu (same as menu key / hotspot).
-// onTap order — screen 1: menu hotspot, L/B/R circles, bottom half → filtered History. Screen 2: menu, diaper button, bottom half → History.
-// Main menus: Garmin Menu2 + Menu2InputDelegate (same pattern as breastfeed-tracker). onMenu, KEY_ENTER, hotspot — _pushScreenMenu().
+// Forward: SWIPE_UP, KEY_DOWN. Back: SWIPE_DOWN, KEY_UP. SWIPE_LEFT opens menu (same as menu key).
+// onTap order — screen 1: L/B/R circles, bottom half → filtered History. Screen 2: diaper button, bottom half → History.
+// Main menus: Garmin Menu2 + Menu2InputDelegate (same pattern as breastfeed-tracker). onMenu + KEY_ENTER — _pushScreenMenu().
 class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
@@ -41,12 +41,6 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         var ds = System.getDeviceSettings();
         var x = c[0];
         var y = c[1];
-
-        if (new MenuHotspot().hitTest(x, y, ds.screenWidth, ds.screenHeight)) {
-            _pushScreenMenu();
-            return true;
-        }
-
         var h = ds.screenHeight;
 
         if (_screen == 1) {

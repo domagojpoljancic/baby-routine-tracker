@@ -1,4 +1,3 @@
-import Toybox.System;
 import Toybox.WatchUi;
 
 class OnboardingOverlayDelegate extends WatchUi.BehaviorDelegate {
@@ -21,12 +20,6 @@ class OnboardingOverlayDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(clickEvent) {
-        var c = clickEvent.getCoordinates();
-        var ds = System.getDeviceSettings();
-        if (new MenuHotspot().hitTest(c[0], c[1], ds.screenWidth, ds.screenHeight)) {
-            _dismissAndOpenMenu();
-            return true;
-        }
         _dismiss();
         return true;
     }

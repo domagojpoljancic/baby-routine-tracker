@@ -102,7 +102,6 @@ class HelloGarminView extends WatchUi.View {
 
         _drawTime(dc, screenWidth, screenHeight);
         _drawTopCircles(dc, screenWidth, screenHeight);
-        (new MenuHotspot()).draw(dc);
         _drawDivider(dc, screenWidth, screenHeight);
         _drawMiddleHighlightedRow(dc, mainCenterX, highlightRowY, highlightFont, mainHP[0], mainHP[1], mainHP[2]);
         _drawSecondDivider(dc, screenWidth, screenHeight);

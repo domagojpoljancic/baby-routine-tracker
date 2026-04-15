@@ -19,7 +19,7 @@ Link to the Garmin IQ store: https://apps.garmin.com/apps/1668307c-8455-466e-8df
 | **Undo** | **Undo last** removes the newest entry that matches the **current screen** (feedings vs diapers), not merely the last row in storage. |
 | **Menu (main)** | Garmin **`WatchUi.Menu2`** from `MainMenuBuilder` with **`BabyRoutineMenu2InputDelegate`** (and **`BabyRoutineStartMenuInputDelegate`** for **Start**). Items: Undo, Start (Left / Bottle / Right) or **Add diaper**, History, History(all), **Settings**, **How it works**, About. Transitions: **`SLIDE_UP`** / **`SLIDE_DOWN`** on push/pop. |
 | **Settings** | **`Menu2`** with **Default screen** → choose **Feeding** or **Diaper** as the app entry screen (`default_screen_v1` in storage). |
-| **How it works** | Scrollable help view (`HowItWorksView` / `HowItWorksDelegate`) from the main menu. |
+| **How it works** | Scrollable help (`HowItWorksView` / `HowItWorksDelegate`): left-aligned body copy, scroll resets when opened. |
 | **About** | Scrollable copy: purpose, privacy summary, MIT notice, plus manual **version / build** lines in `AboutView`. |
 | **Glance** | When the runtime supports `WatchUi.GlanceView`, the app shows title **Baby Routine**, the latest event line, and optionally the previous line. Both event lines share the same font tier: **TINY**, or **XTINY** if either line is wider than **94%** of the glance width (same rule as the empty-state line). |
 | **Time format** | Clock and history times follow the device **12h / 24h** setting. |
@@ -48,22 +48,22 @@ The authoritative list of **product ids** is in `manifest.xml` (`<iq:products>`)
 
 ### Screen 1 — Feeding
 
-- **Menu hint (first times):** if the user has **not** yet dismissed the hint (flag in `Application.Storage`, `menu_helper_seen_v1`), about **one second** after the **Feeding** view appears an **onboarding overlay** dims the **upper half** with **Menu »** / **« or left swipe**. It **auto-dismisses** after ~2s (and marks the hint seen), or dismiss via tap / swipe / most keys. **Menu hotspot**, **swipe left**, **Menu** key, or **Enter** can open the main **Menu2** after dismiss. **Note:** this is **not** tied to an empty event log—existing users upgrading without the flag may see the hint once.
+- **Menu hint (first times):** if the user has **not** yet dismissed the hint (`menu_helper_seen_v1`), about **one second** after the **Feeding** view appears an **onboarding overlay** dims the **upper half** with **Menu »** / **« or left swipe**. It **auto-dismisses** after ~2s (marks seen), or dismiss via **tap** / most keys / swipes (other than left). **Swipe left**, **Menu** key, or **Enter** **open the main Menu2** after dismiss; a **plain tap** only dismisses. **Note:** not tied to an empty event log—upgrades without the flag may see the hint once.
 - Three touch regions: **Left**, **Bottle**, **Right**.
 - Main and lower rows show **feeding** entries only (types 1–3). Diapers are hidden here.
 - **Bottom half** tap opens **feeding-filtered** history.
-- **Menu** (hotspot, **Menu** key, or **swipe left**): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, How it works, About.
+- **Menu** (**Menu** key or **swipe left**): Undo last, Start → Left / Bottle / Right, History, History(all), Settings, How it works, About.
 
 ### Screen 2 — Diaper
 
 - **Diaper** button logs a change; **Add diaper** in the menu does the same and closes the menu.
 - Rows show **diaper** entries only (type 4).
 - **Bottom half** tap opens **diaper-filtered** history.
-- Menu: Undo last, Add diaper, History, History(all), Settings, How it works, About (open via hotspot, **Menu** key, or **swipe left**).
+- Menu: Undo last, Add diaper, History, History(all), Settings, How it works, About (open via **Menu** key or **swipe left**).
 
 ### Navigation between screens
 
-- **Swipe left** on the Feeding or Diaper screen opens the **same menu** as the hotspot / **Menu** key (does not switch screens).
+- **Swipe left** on the Feeding or Diaper screen opens the **same Menu2** as the **Menu** key (does not switch screens).
 - **Swipe up** / **Next** and **swipe down** / **Previous** switch between Feeding and Diaper. Implementation uses **`WatchUi.pushView` / `popView`** when the flow started from **Feeding** (`:stack` delegate) and **`WatchUi.switchToView`** when the app **opened on Diaper** or after changing the **default screen** in Settings (`:switch` delegate)—behavior should be verified on hardware for stack depth and back key.
 - **Screen indicator** (side dots): **two** dots for the two live screens.
 
@@ -181,7 +181,6 @@ The default **Build (.prg)** task does **not** pass `-y`; the shell examples abo
 | `source/SettingsView.mc`, `SettingsDelegate.mc` | Settings **`Menu2`** root; delegate pushes default-screen submenu |
 | `source/DefaultScreenSettingView.mc`, `DefaultScreenSettingDelegate.mc` | Feeding vs Diaper default; may `switchToView` root |
 | `source/HowItWorksView.mc`, `HowItWorksDelegate.mc` | Help copy + scroll |
-| `source/MenuHotspot.mc` | Menu icon hit-test + draw on main screens |
 | `source/menu/MainMenuBuilder.mc` | Builds **`WatchUi.Menu2`** trees for main and Start menus |
 | `source/menu/BabyRoutineMenu2InputDelegate.mc` | **`Menu2InputDelegate`** for main Feeding/Diaper menus |
 | `source/menu/BabyRoutineStartMenuInputDelegate.mc` | **`Menu2InputDelegate`** for **Start** (Left / Bottle / Right) |
