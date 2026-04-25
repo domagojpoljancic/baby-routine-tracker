@@ -224,14 +224,17 @@ class ManualTimeState {
 
         if (adjusted > _maxMinute()) {
             if (hour < _maxHour()) {
-                hour += 1;
-                minute = 0;
-                if (minute > _maxMinute()) {
-                    minute = _maxMinute();
+                var nextHour = hour + 1;
+                if (!_isFuture(nextHour, 0, amPm)) {
+                    hour = nextHour;
+                    minute = 0;
+                    if (minute > _maxMinute()) {
+                        minute = _maxMinute();
+                    }
+                    return;
                 }
-            } else {
-                minute = _maxMinute();
             }
+            minute = _maxMinute();
             return;
         }
 
@@ -249,6 +252,9 @@ class ManualTimeState {
 
         if (adjusted > _maxMinute()) {
             if (hour < _maxHour()) {
+                if (_isFuture(hour + 1, 0, amPm)) {
+                    return null;
+                }
                 return 0;
             }
             return null;

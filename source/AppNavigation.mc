@@ -1,4 +1,5 @@
 import Toybox.System;
+import Toybox.Time;
 import Toybox.WatchUi;
 
 // Screen indices: 1 = home (feeding UI), 2 = second, 3 = third.
@@ -9,11 +10,13 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
     var _navMode;
+    var _holdSuppressUntil;
 
     function initialize(screen, navMode) {
         BehaviorDelegate.initialize();
         _screen = screen;
         _navMode = navMode;
+        _holdSuppressUntil = 0;
         if (_navMode == null) {
             _navMode = :stack;
         }
@@ -37,6 +40,10 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(clickEvent) {
+        if (_shouldSuppressTapAfterHold()) {
+            return true;
+        }
+
         var c = clickEvent.getCoordinates();
         var ds = System.getDeviceSettings();
         var x = c[0];
@@ -72,6 +79,59 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
             return false;
         }
 
+        return false;
+    }
+
+    function onHold(clickEvent) {
+        var c = clickEvent.getCoordinates();
+        var ds = System.getDeviceSettings();
+        var x = c[0];
+        var y = c[1];
+        var h = ds.screenHeight;
+
+        if (_screen == 1) {
+            var feedingType = new FeedingTouchLayout().hitCircle(x, y, ds.screenWidth, h);
+            if (feedingType != null) {
+                _markHoldHandled();
+                ManualAddFlow.openTimeSelector(feedingType, 0);
+                HapticHelper.subtleActionPulse();
+                return true;
+            }
+        } else if (_screen == 2) {
+            if (new DiaperTouchLayout().hitDiaperButton(x, y, ds.screenWidth, h)) {
+                _markHoldHandled();
+                ManualAddFlow.openTimeSelector(4, 0);
+                HapticHelper.subtleActionPulse();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function onRelease(clickEvent) {
+        if (_holdSuppressUntil > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function _markHoldHandled() {
+        _holdSuppressUntil = Time.now().value() + 2;
+    }
+
+    function _shouldSuppressTapAfterHold() {
+        if (_holdSuppressUntil <= 0) {
+            return false;
+        }
+
+        if (Time.now().value() <= _holdSuppressUntil) {
+            _holdSuppressUntil = 0;
+            return true;
+        }
+
+        _holdSuppressUntil = 0;
         return false;
     }
 
