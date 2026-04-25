@@ -16,6 +16,7 @@ class MainMenuBuilder {
         if (screen == 1) {
             menu.addItem(new MenuItem("Undo last", null, :undoLast, {}));
             menu.addItem(new MenuItem("Start", null, :start, {}));
+            menu.addItem(new MenuItem("Add manually", null, :addManually, {}));
             menu.addItem(new MenuItem("History", null, :history, {}));
             menu.addItem(new MenuItem("History(all)", null, :historyAll, {}));
             menu.addItem(new MenuItem("Settings", null, :settings, {}));
@@ -24,6 +25,7 @@ class MainMenuBuilder {
         } else if (screen == 2) {
             menu.addItem(new MenuItem("Undo last", null, :undoLast, {}));
             menu.addItem(new MenuItem("Add diaper", null, :addDiaper, {}));
+            menu.addItem(new MenuItem("Add manually", null, :addManually, {}));
             menu.addItem(new MenuItem("History", null, :history, {}));
             menu.addItem(new MenuItem("History(all)", null, :historyAll, {}));
             menu.addItem(new MenuItem("Settings", null, :settings, {}));
@@ -43,6 +45,14 @@ class MainMenuBuilder {
         menu.addItem(new MenuItem("Left", null, :feedLeft, {}));
         menu.addItem(new MenuItem("Bottle", null, :feedBottle, {}));
         menu.addItem(new MenuItem("Right", null, :feedRight, {}));
+        return menu;
+    }
+
+    static function buildManualFeedingTypeMenu() {
+        var menu = new WatchUi.Menu2({ :title => "Add manually" });
+        menu.addItem(new MenuItem("Left", null, :manualFeedLeft, {}));
+        menu.addItem(new MenuItem("Bottle", null, :manualFeedBottle, {}));
+        menu.addItem(new MenuItem("Right", null, :manualFeedRight, {}));
         return menu;
     }
 }

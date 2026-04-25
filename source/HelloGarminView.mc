@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.Time;
 import Toybox.Timer;
 import Toybox.WatchUi;
@@ -239,7 +240,7 @@ class HelloGarminView extends WatchUi.View {
         var ent = entries as Array;
         var latest = ent[ent.size() - 1];
         var latestTs = _fmt.entryTs(latest);
-        var hhmm = _fmt.formatHmFromTs(latestTs);
+        var hhmm = _formatMainRowTimeFromTs(latestTs);
         var elapsed = _fmt.elapsedWholeMinutes(nowTs, latestTs);
 
         var probeLeft;
@@ -278,6 +279,30 @@ class HelloGarminView extends WatchUi.View {
         return Graphics.FONT_XTINY;
     }
 
+    // Main highlighted row should respect 12h/24h setting, but without AM/PM suffix.
+    function _formatMainRowTimeFromTs(ts) {
+        if (ts == null) {
+            return "??:??";
+        }
+        if (System.getDeviceSettings().is24Hour) {
+            return _fmt.formatHmFromTs(ts);
+        }
+
+        var moment = new Time.Moment(ts);
+        var info = Time.Gregorian.info(moment, Time.FORMAT_SHORT);
+        var h24 = info.hour;
+        var mm = (info.min < 10 ? "0" : "") + info.min.toString();
+        var h12;
+        if (h24 == 0) {
+            h12 = 12;
+        } else if (h24 > 12) {
+            h12 = h24 - 12;
+        } else {
+            h12 = h24;
+        }
+        return h12.toString() + ":" + mm;
+    }
+
     // [0]=baseText ("HH:MM - Label" or empty-state line), [1]=timerSuffix (" - Xm" or ""),
     // [2]=timerUseWhite (even unix second => white suffix; odd => light gray); only meaningful if [1] non-empty.
     function _mainRowHighlightParts(nowTs, entries) {
@@ -296,7 +321,7 @@ class HelloGarminView extends WatchUi.View {
         var latest = ent[ent.size() - 1];
         var latestTs = _fmt.entryTs(latest);
         var baseLabel = _fmt.typeLabel(_fmt.entryType(latest));
-        var hhmm = _fmt.formatHmFromTs(latestTs);
+        var hhmm = _formatMainRowTimeFromTs(latestTs);
         var baseText = hhmm + " - " + baseLabel;
 
         var timerSuffix = "";
@@ -329,10 +354,16 @@ class HelloGarminView extends WatchUi.View {
 
         var count = ent.size();
         if (count >= 2) {
-            texts[0] = _fmt.formatHistoryLine(ent[count - 2]);
+            var e0 = ent[count - 2];
+            var ts0 = _fmt.entryTs(e0);
+            var t0 = _fmt.typeLabel(_fmt.entryType(e0));
+            texts[0] = _formatMainRowTimeFromTs(ts0) + " - " + t0;
         }
         if (count >= 3) {
-            texts[1] = _fmt.formatHistoryLine(ent[count - 3]);
+            var e1 = ent[count - 3];
+            var ts1 = _fmt.entryTs(e1);
+            var t1 = _fmt.typeLabel(_fmt.entryType(e1));
+            texts[1] = _formatMainRowTimeFromTs(ts1) + " - " + t1;
         }
 
         return texts;

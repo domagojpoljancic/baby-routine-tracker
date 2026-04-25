@@ -29,6 +29,17 @@ class BabyRoutineMenu2InputDelegate extends WatchUi.Menu2InputDelegate {
             return;
         }
 
+        if (id == :addManually) {
+            HapticHelper.subtleActionPulse();
+            if (_screen == 2) {
+                ManualAddFlow.openTimeSelector(4, 1);
+            } else {
+                var manualTypes = MainMenuBuilder.buildManualFeedingTypeMenu();
+                WatchUi.pushView(manualTypes, new ManualFeedingTypeDelegate(), WatchUi.SLIDE_UP);
+            }
+            return;
+        }
+
         if (id == :addDiaper) {
             (new DiaperActions()).completeAddDiaper();
             HapticHelper.subtleActionPulse();

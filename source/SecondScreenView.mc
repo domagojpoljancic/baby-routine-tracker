@@ -1,5 +1,7 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
+import Toybox.Time;
 import Toybox.WatchUi;
 
 // Screen 2: diaper tracking (shared store; t=4).
@@ -39,14 +41,14 @@ class SecondScreenView extends WatchUi.View {
             lower1 = "";
         } else {
             var latestTs = _fmt.entryTs(diapersArr[0]);
-            mainRowText = _fmt.formatHmFromTs(latestTs) + " - Diaper";
+            mainRowText = _formatMainRowTimeFromTs(latestTs) + " - Diaper";
             if (diapersArr.size() >= 2) {
-                lower0 = "- " + _fmt.formatHmFromTs(_fmt.entryTs(diapersArr[1])) + " -";
+                lower0 = "- " + _formatMainRowTimeFromTs(_fmt.entryTs(diapersArr[1])) + " -";
             } else {
                 lower0 = "";
             }
             if (diapersArr.size() >= 3) {
-                lower1 = "- " + _fmt.formatHmFromTs(_fmt.entryTs(diapersArr[2])) + " -";
+                lower1 = "- " + _formatMainRowTimeFromTs(_fmt.entryTs(diapersArr[2])) + " -";
             } else {
                 lower1 = "";
             }
@@ -103,6 +105,30 @@ class SecondScreenView extends WatchUi.View {
 
     function _drawTime(dc, screenWidth, screenHeight) {
         (new MainScreenTimeDisplay()).draw(dc, screenWidth, screenHeight);
+    }
+
+    // Main highlighted/lower rows should respect 12h/24h setting, without AM/PM suffix.
+    function _formatMainRowTimeFromTs(ts) {
+        if (ts == null) {
+            return "??:??";
+        }
+        if (System.getDeviceSettings().is24Hour) {
+            return _fmt.formatHmFromTs(ts);
+        }
+
+        var moment = new Time.Moment(ts);
+        var info = Time.Gregorian.info(moment, Time.FORMAT_SHORT);
+        var h24 = info.hour;
+        var mm = (info.min < 10 ? "0" : "") + info.min.toString();
+        var h12;
+        if (h24 == 0) {
+            h12 = 12;
+        } else if (h24 > 12) {
+            h12 = h24 - 12;
+        } else {
+            h12 = h24;
+        }
+        return h12.toString() + ":" + mm;
     }
 
     // Primary action button in the upper content band (same vertical band as screen 1 circles).
