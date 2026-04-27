@@ -14,8 +14,20 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         GlanceView.initialize();
     }
 
+    function _maxEntriesToScan() {
+        return 20;
+    }
+
+    function _toNumberOrNull(value) {
+        if (value == null || !(value has :toNumber)) {
+            return null;
+        }
+
+        return value.toNumber();
+    }
+
     function _entryTs(entry) {
-        if (entry == null) {
+        if (entry == null || !(entry instanceof Dictionary)) {
             return null;
         }
         var d = entry as Dictionary;
@@ -26,11 +38,17 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (raw == null) {
             return null;
         }
-        return raw.toNumber();
+
+        var ts = _toNumberOrNull(raw);
+        if (ts == null || ts <= 0) {
+            return null;
+        }
+
+        return ts;
     }
 
     function _entryType(entry) {
-        if (entry == null) {
+        if (entry == null || !(entry instanceof Dictionary)) {
             return null;
         }
         var d = entry as Dictionary;
@@ -38,7 +56,13 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         if (t == null) {
             t = d[:t];
         }
-        return t;
+
+        var n = _toNumberOrNull(t);
+        if (n == 1 || n == 2 || n == 3 || n == 4) {
+            return n;
+        }
+
+        return null;
     }
 
     function _typeLabel(code) {
@@ -59,6 +83,10 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
             return "Diaper";
         }
         return "?";
+    }
+
+    function _isValidEntry(entry) {
+        return _entryTs(entry) != null && _entryType(entry) != null;
     }
 
     function _formatTimeFromTs(ts) {
@@ -101,6 +129,27 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         return _formatTimeFromTs(_entryTs(entry)) + " - " + _typeLabel(_entryType(entry));
     }
 
+    function _recentValidGlanceLines(list) {
+        var lines = [];
+        if (list == null || !(list instanceof Array)) {
+            return lines;
+        }
+
+        var listArr = list as Array;
+        var i = listArr.size() - 1;
+        var scanned = 0;
+        while (i >= 0 && scanned < _maxEntriesToScan() && lines.size() < 2) {
+            var entry = listArr[i];
+            if (_isValidEntry(entry)) {
+                lines.add(_formatGlanceLine(entry));
+            }
+            scanned += 1;
+            i -= 1;
+        }
+
+        return lines;
+    }
+
     // Same rule as main branch: TINY first, XTINY only if wider than 94% of full glance width.
     // Using full canvas width for the measure (not a reduced text column) is what keeps entries large.
     function _rowFontFor(dc, w, text) {
@@ -135,22 +184,18 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         var titleText = "Baby Routine";
         var titleFont = Graphics.FONT_XTINY;
 
-        var list = Application.Storage.getValue("feedings_v1");
+        var lines = _recentValidGlanceLines(Application.Storage.getValue("feedings_v1"));
         var line1 = null;
         var line2 = null;
+        var lineCount = lines.size();
 
-        var listArr = null;
-        if (list != null) {
-            listArr = list as Array;
-        }
-        var isEmpty = (listArr == null || listArr.size() == 0);
+        var isEmpty = (lineCount == 0);
         if (isEmpty) {
             line1 = "No events";
         } else {
-            var n = listArr.size();
-            line1 = _formatGlanceLine(listArr[n - 1]);
-            if (n >= 2) {
-                line2 = _formatGlanceLine(listArr[n - 2]);
+            line1 = lines[0];
+            if (lineCount >= 2) {
+                line2 = lines[1];
             }
         }
 

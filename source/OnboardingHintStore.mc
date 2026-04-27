@@ -4,6 +4,7 @@ import Toybox.Application;
 class OnboardingHintStore {
 
     var KEY_MENU_HELPER_SEEN = "menu_helper_seen_v1";
+    var KEY_MANUAL_HELPER_PENDING = "manual_helper_pending_v1";
     var LEGACY_KEY = "onboarding_menu_hint_v1";
 
     function isMenuHelperSeen() {
@@ -21,5 +22,15 @@ class OnboardingHintStore {
 
     function markMenuHelperSeen() {
         Application.Storage.setValue(KEY_MENU_HELPER_SEEN, true);
+        Application.Storage.setValue(KEY_MANUAL_HELPER_PENDING, false);
+    }
+
+    function isManualAddHelperPending() {
+        var v = Application.Storage.getValue(KEY_MANUAL_HELPER_PENDING);
+        return v != null && v == true;
+    }
+
+    function markManualAddHelperPending() {
+        Application.Storage.setValue(KEY_MANUAL_HELPER_PENDING, true);
     }
 }

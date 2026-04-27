@@ -1,8 +1,14 @@
 # Baby Routine (Garmin)
 
-**Current version: v1.1**
+**Current version: v1.2**
 
 Baby Routine is a **Garmin Connect IQ** watch app for logging **feeding** (left, bottle, right) and **diaper** changes on the wrist - quick, on-device, no phone required. On the watch it shows up as **Baby Routine**.
+
+**What's new in v1.2**
+
+- **Added manual entry:** Add Feeding or Diaper entries with a selected time from today.
+- **Added long-press shortcuts:** Hold **L**, **B**, **R**, or the diaper button to add manually.
+- **Improved first-run hints:** New helper overlay explains the manual-add shortcut.
 
 **What's new in v1.1**
 

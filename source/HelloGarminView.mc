@@ -12,6 +12,7 @@ class HelloGarminView extends WatchUi.View {
     var _fmt;
     var _animTick = 0;
     var _onboardingDelayStarted;
+    var _manualHelperDelayStarted;
     var _onboardingTimer;
     // Last tapped circle for brief fill flash: 1=L, 2=R, 3=B (matches FeedingTouchLayout); null = none.
     var _flashCircleCode = null;
@@ -24,6 +25,7 @@ class HelloGarminView extends WatchUi.View {
         _store = new FeedingStore();
         _fmt = new FeedingFormatters();
         _onboardingDelayStarted = false;
+        _manualHelperDelayStarted = false;
         _onboardingTimer = null;
     }
 
@@ -32,6 +34,15 @@ class HelloGarminView extends WatchUi.View {
 
     function onShow() {
         WatchUi.animate(self, :_animTick, WatchUi.ANIM_TYPE_LINEAR, 0, 1, 3600.0, null);
+
+        if ((new OnboardingHintStore()).isManualAddHelperPending()) {
+            if (!_manualHelperDelayStarted) {
+                _manualHelperDelayStarted = true;
+                _onboardingTimer = new Timer.Timer();
+                _onboardingTimer.start(self.method(:manualHelperDeferredPush), 100, false);
+            }
+            return;
+        }
 
         if (_onboardingDelayStarted) {
             return;
@@ -50,7 +61,14 @@ class HelloGarminView extends WatchUi.View {
         if ((new OnboardingHintStore()).isMenuHelperSeen()) {
             return;
         }
-        WatchUi.pushView(new OnboardingOverlayView(), new OnboardingOverlayDelegate(_screenIndex), WatchUi.SLIDE_IMMEDIATE);
+        WatchUi.pushView(new OnboardingOverlayView(:menu, _screenIndex), new OnboardingOverlayDelegate(_screenIndex, :menu), WatchUi.SLIDE_IMMEDIATE);
+    }
+
+    function manualHelperDeferredPush() as Void {
+        if (!(new OnboardingHintStore()).isManualAddHelperPending()) {
+            return;
+        }
+        WatchUi.pushView(new OnboardingOverlayView(:manualAdd, _screenIndex), new OnboardingOverlayDelegate(_screenIndex, :manualAdd), WatchUi.SLIDE_IMMEDIATE);
     }
 
     function onHide() {

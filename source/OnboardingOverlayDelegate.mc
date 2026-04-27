@@ -3,19 +3,30 @@ import Toybox.WatchUi;
 class OnboardingOverlayDelegate extends WatchUi.BehaviorDelegate {
 
     var _screen;
+    var _kind;
 
-    function initialize(screen) {
+    function initialize(screen, kind) {
         BehaviorDelegate.initialize();
         _screen = screen;
+        _kind = kind;
+        if (_kind == null) {
+            _kind = :menu;
+        }
     }
 
     function _dismiss() {
-        (new OnboardingHintStore()).markMenuHelperSeen();
-        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        if (_kind == :menu) {
+            (new OnboardingHintStore()).markManualAddHelperPending();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        } else {
+            (new OnboardingHintStore()).markMenuHelperSeen();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        }
     }
 
     function _dismissAndOpenMenu() {
-        _dismiss();
+        (new OnboardingHintStore()).markMenuHelperSeen();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         (new CircularNavDelegate(_screen, :stack)).openScreenMenu();
     }
 

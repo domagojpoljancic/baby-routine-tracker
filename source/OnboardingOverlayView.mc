@@ -9,6 +9,8 @@ import Toybox.WatchUi;
 class OnboardingOverlayView extends WatchUi.View {
 
     var _autoDismissTimer;
+    var _kind;
+    var _screen;
 
     function _chordHalfWidthAtY(w, h, y) {
         var cy = h / 2;
@@ -104,9 +106,14 @@ class OnboardingOverlayView extends WatchUi.View {
         return Graphics.FONT_XTINY;
     }
 
-    function initialize() {
+    function initialize(kind, screen) {
         View.initialize();
         _autoDismissTimer = null;
+        _kind = kind;
+        _screen = screen;
+        if (_kind == null) {
+            _kind = :menu;
+        }
     }
 
     function onShow() {
@@ -115,7 +122,11 @@ class OnboardingOverlayView extends WatchUi.View {
             _autoDismissTimer = null;
         }
         _autoDismissTimer = new Timer.Timer();
-        _autoDismissTimer.start(self.method(:onAutoDismiss), 2000, false);
+        var duration = 2000;
+        if (_kind == :manualAdd) {
+            duration = 3000;
+        }
+        _autoDismissTimer.start(self.method(:onAutoDismiss), duration, false);
     }
 
     function onHide() {
@@ -126,8 +137,13 @@ class OnboardingOverlayView extends WatchUi.View {
     }
 
     function onAutoDismiss() as Void {
-        (new OnboardingHintStore()).markMenuHelperSeen();
-        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        if (_kind == :menu) {
+            (new OnboardingHintStore()).markManualAddHelperPending();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        } else {
+            (new OnboardingHintStore()).markMenuHelperSeen();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        }
     }
 
     function _drawDimDitherTop(dc, w, hTop) {
@@ -156,7 +172,7 @@ class OnboardingOverlayView extends WatchUi.View {
         }
 
         if (useBlend) {
-            var dim = Graphics.createColor(210, 200, 200, 205);
+            var dim = Graphics.createColor(230, 230, 230, 230);
             dc.setColor(dim, Graphics.COLOR_TRANSPARENT);
             dc.fillRectangle(0, 0, w, hTop);
         } else {
@@ -173,9 +189,14 @@ class OnboardingOverlayView extends WatchUi.View {
         var h = dc.getHeight();
         var ds = System.getDeviceSettings();
 
+        if (_kind == :manualAdd) {
+            _drawManualAddHint(dc, w, h, ds);
+            return;
+        }
+
         _drawDimLayer(dc, w, h);
 
-        var ink = Graphics.createColor(255, 0xAA, 0x33, 0x22);
+        var ink = Graphics.createColor(255, 0xC0, 0x00, 0x00);
         dc.setColor(ink, Graphics.COLOR_TRANSPARENT);
 
         var line1 = "Menu »";
@@ -251,5 +272,39 @@ class OnboardingOverlayView extends WatchUi.View {
         dc.drawText(xr1, fy1, font, line1, justify);
 
         dc.drawText(xr2, fy2, font, line2, justify);
+    }
+
+    function _drawManualAddHint(dc, w, h, ds) {
+        dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
+        dc.clear();
+
+        var hBottom = h / 2;
+        var top = h / 2;
+        var useBlend = dc has :setBlendMode;
+        if (useBlend) {
+            dc.setBlendMode(Graphics.BLEND_MODE_SOURCE_OVER);
+            var dim = Graphics.createColor(230, 230, 230, 230);
+            dc.setColor(dim, Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(0, top, w, hBottom);
+            dc.setBlendMode(Graphics.BLEND_MODE_DEFAULT);
+        } else {
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(0, top, w, hBottom);
+        }
+
+        var line1 = "Hold L / B / R";
+        var line2 = "to add manually";
+        if (_screen == 2) {
+            line1 = "Hold Diaper";
+        }
+
+        var y1 = h * 62 / 100;
+        var y2 = h * 76 / 100;
+        var maxW = _maxLineWidthForLayout(ds, w, h, y1, y2);
+        var font = _pickFontForLines(dc, maxW, line1, line2);
+        var ink = Graphics.createColor(255, 0xC0, 0x00, 0x00);
+        dc.setColor(ink, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w / 2, y1, font, line1, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(w / 2, y2, font, line2, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 }

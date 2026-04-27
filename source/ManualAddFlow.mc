@@ -210,57 +210,42 @@ class ManualTimeState {
     }
 
     function _adjustMinute(delta) {
-        var adjusted = minute + delta;
-
-        if (adjusted < 0) {
-            if (hour > _minHour()) {
-                hour -= 1;
-                minute = 59;
-            } else {
-                minute = 0;
-            }
+        var candidate = _minuteCandidate(delta);
+        if (candidate == null) {
             return;
         }
 
-        if (adjusted > _maxMinute()) {
-            if (hour < _maxHour()) {
-                var nextHour = hour + 1;
-                if (!_isFuture(nextHour, 0, amPm)) {
-                    hour = nextHour;
-                    minute = 0;
-                    if (minute > _maxMinute()) {
-                        minute = _maxMinute();
-                    }
-                    return;
-                }
-            }
-            minute = _maxMinute();
-            return;
-        }
-
-        minute = adjusted;
+        hour = candidate[0];
+        minute = candidate[1];
+        amPm = candidate[2];
     }
 
     function _minuteAfter(delta) {
-        var adjusted = minute + delta;
-        if (adjusted < 0) {
-            if (hour > _minHour()) {
-                return 59;
-            }
+        var candidate = _minuteCandidate(delta);
+        if (candidate == null) {
             return null;
         }
 
-        if (adjusted > _maxMinute()) {
-            if (hour < _maxHour()) {
-                if (_isFuture(hour + 1, 0, amPm)) {
-                    return null;
-                }
-                return 0;
-            }
+        return candidate[1];
+    }
+
+    function _minuteCandidate(delta) {
+        var nowInfo = Time.Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var nowMinutes = nowInfo.hour * 60 + nowInfo.min;
+        var candidateMinutes = _hour24() * 60 + minute + delta;
+
+        if (candidateMinutes < 0 || candidateMinutes > nowMinutes) {
             return null;
         }
 
-        return adjusted;
+        var candidateHour24 = candidateMinutes / 60;
+        var candidateMinute = candidateMinutes % 60;
+        if (System.getDeviceSettings().is24Hour) {
+            return [candidateHour24, candidateMinute, 0];
+        }
+
+        var candidateAmPm = candidateHour24 < 12 ? 0 : 1;
+        return [_to12Hour(candidateHour24), candidateMinute, candidateAmPm];
     }
 
     function _currentHour() {
@@ -542,8 +527,14 @@ class ManualTimeStepView extends WatchUi.View {
 
         // Simple check only; the system clock's full circular affordance is not available to CIQ apps.
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_BLACK);
-        dc.drawLine(x - size / 2, y, x - size / 8, y + size / 3);
-        dc.drawLine(x - size / 8, y + size / 3, x + size / 2, y - size / 2);
+        _drawCheckStroke(dc, x - size / 2, y, x - size / 8, y + size / 3);
+        _drawCheckStroke(dc, x - size / 8, y + size / 3, x + size / 2, y - size / 2);
+    }
+
+    function _drawCheckStroke(dc, x1, y1, x2, y2) {
+        dc.drawLine(x1, y1, x2, y2);
+        dc.drawLine(x1 + 1, y1, x2 + 1, y2);
+        dc.drawLine(x1, y1 + 1, x2, y2 + 1);
     }
 
     function _mainFontFor(dc, w, text) {
@@ -561,6 +552,7 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
     var _view;
     var _step;
     var _dragY;
+    var _lastScrollAt;
 
     function initialize(state, view, step) {
         BehaviorDelegate.initialize();
@@ -568,16 +560,17 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         _view = view;
         _step = step;
         _dragY = null;
+        _lastScrollAt = null;
     }
 
     function onKey(keyEvent) {
         var key = keyEvent.getKey();
         if (key == WatchUi.KEY_UP) {
-            _scrollAdjust(1);
+            _applySingleScroll(-1);
             return true;
         }
         if (key == WatchUi.KEY_DOWN) {
-            _scrollAdjust(-1);
+            _applySingleScroll(1);
             return true;
         }
         if (key == WatchUi.KEY_ENTER) {
@@ -594,11 +587,11 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
     function onSwipe(swipeEvent) {
         var dir = swipeEvent.getDirection();
         if (dir == WatchUi.SWIPE_UP) {
-            _scrollAdjust(1);
+            _applySingleScroll(1);
             return true;
         }
         if (dir == WatchUi.SWIPE_DOWN) {
-            _scrollAdjust(-1);
+            _applySingleScroll(-1);
             return true;
         }
         return false;
@@ -625,15 +618,28 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         }
 
         var diff = y - _dragY;
-        while (diff >= threshold) {
-            _scrollAdjust(-1);
+        if (diff >= threshold) {
+            if (!_canApplyScroll()) {
+                return true;
+            }
             _dragY += threshold;
-            diff -= threshold;
+            if (_scrollAdjust(-1)) {
+                WatchUi.requestUpdate();
+                HapticHelper.subtleActionPulse();
+            }
+            return true;
         }
-        while (diff <= -threshold) {
-            _scrollAdjust(1);
+
+        if (diff <= -threshold) {
+            if (!_canApplyScroll()) {
+                return true;
+            }
             _dragY -= threshold;
-            diff += threshold;
+            if (_scrollAdjust(1)) {
+                WatchUi.requestUpdate();
+                HapticHelper.subtleActionPulse();
+            }
+            return true;
         }
 
         return true;
@@ -683,19 +689,32 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         var before = _state.currentStepValue(_step);
         _state.adjust(_step, delta);
         var after = _state.currentStepValue(_step);
-        if (after != before) {
-            HapticHelper.subtleActionPulse();
-        }
-        WatchUi.requestUpdate();
+        return after != before;
     }
 
     function _scrollAdjust(delta) {
-        if (_step == :hour || _step == :minute) {
-            _adjust(0 - delta);
+        return _adjust(0 - delta);
+    }
+
+    function _applySingleScroll(delta) {
+        if (!_canApplyScroll()) {
             return;
         }
 
-        _adjust(delta);
+        if (_scrollAdjust(delta)) {
+            WatchUi.requestUpdate();
+            HapticHelper.subtleActionPulse();
+        }
+    }
+
+    function _canApplyScroll() {
+        var now = System.getTimer();
+        if (_lastScrollAt != null && now - _lastScrollAt < 90) {
+            return false;
+        }
+
+        _lastScrollAt = now;
+        return true;
     }
 
     function _setStep(step) {
@@ -706,6 +725,7 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         _step = step;
         _view.setStep(step);
         _dragY = null;
+        _lastScrollAt = null;
         HapticHelper.subtleActionPulse();
         WatchUi.requestUpdate();
     }
