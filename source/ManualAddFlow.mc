@@ -3,6 +3,8 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
+const MANUAL_DRAG_MIN_STEP_PX = 18;
+
 class ManualAddFlow {
 
     static function openTimeSelector(typeCode, popCountAfterAccept) {
@@ -552,7 +554,7 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
     var _view;
     var _step;
     var _dragY;
-    var _lastScrollAt;
+    var _dragActive;
 
     function initialize(state, view, step) {
         BehaviorDelegate.initialize();
@@ -560,17 +562,17 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         _view = view;
         _step = step;
         _dragY = null;
-        _lastScrollAt = null;
+        _dragActive = false;
     }
 
     function onKey(keyEvent) {
         var key = keyEvent.getKey();
         if (key == WatchUi.KEY_UP) {
-            _applySingleScroll(-1);
+            _applyScrollNow(-1);
             return true;
         }
         if (key == WatchUi.KEY_DOWN) {
-            _applySingleScroll(1);
+            _applyScrollNow(1);
             return true;
         }
         if (key == WatchUi.KEY_ENTER) {
@@ -587,11 +589,11 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
     function onSwipe(swipeEvent) {
         var dir = swipeEvent.getDirection();
         if (dir == WatchUi.SWIPE_UP) {
-            _applySingleScroll(1);
+            _applyScrollNow(1);
             return true;
         }
         if (dir == WatchUi.SWIPE_DOWN) {
-            _applySingleScroll(-1);
+            _applyScrollNow(-1);
             return true;
         }
         return false;
@@ -604,41 +606,33 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
 
         if (type == WatchUi.DRAG_TYPE_START || _dragY == null) {
             _dragY = y;
+            _dragActive = true;
             return true;
         }
 
         if (type == WatchUi.DRAG_TYPE_STOP) {
             _dragY = null;
+            _dragActive = false;
             return true;
         }
 
-        var threshold = System.getDeviceSettings().screenHeight / 18;
-        if (threshold < 12) {
-            threshold = 12;
+        var threshold = System.getDeviceSettings().screenHeight / 14;
+        if (threshold < MANUAL_DRAG_MIN_STEP_PX) {
+            threshold = MANUAL_DRAG_MIN_STEP_PX;
         }
 
         var diff = y - _dragY;
         if (diff >= threshold) {
-            if (!_canApplyScroll()) {
-                return true;
-            }
-            _dragY += threshold;
-            if (_scrollAdjust(-1)) {
-                WatchUi.requestUpdate();
-                HapticHelper.subtleActionPulse();
-            }
+            var stepsDown = _stepsForDragDistance(diff, threshold);
+            _dragY += threshold * stepsDown;
+            _applyScrollNow(0 - stepsDown);
             return true;
         }
 
-        if (diff <= -threshold) {
-            if (!_canApplyScroll()) {
-                return true;
-            }
-            _dragY -= threshold;
-            if (_scrollAdjust(1)) {
-                WatchUi.requestUpdate();
-                HapticHelper.subtleActionPulse();
-            }
+        if (diff <= 0 - threshold) {
+            var stepsUp = _stepsForDragDistance(0 - diff, threshold);
+            _dragY -= threshold * stepsUp;
+            _applyScrollNow(stepsUp);
             return true;
         }
 
@@ -696,25 +690,21 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         return _adjust(0 - delta);
     }
 
-    function _applySingleScroll(delta) {
-        if (!_canApplyScroll()) {
-            return;
-        }
-
+    function _applyScrollNow(delta) {
         if (_scrollAdjust(delta)) {
             WatchUi.requestUpdate();
             HapticHelper.subtleActionPulse();
         }
     }
 
-    function _canApplyScroll() {
-        var now = System.getTimer();
-        if (_lastScrollAt != null && now - _lastScrollAt < 90) {
-            return false;
+    function _stepsForDragDistance(distance, threshold) {
+        if (distance >= threshold * 5) {
+            return 5;
         }
-
-        _lastScrollAt = now;
-        return true;
+        if (distance >= threshold * 3) {
+            return 3;
+        }
+        return 1;
     }
 
     function _setStep(step) {
@@ -725,7 +715,7 @@ class ManualTimeStepDelegate extends WatchUi.BehaviorDelegate {
         _step = step;
         _view.setStep(step);
         _dragY = null;
-        _lastScrollAt = null;
+        _dragActive = false;
         HapticHelper.subtleActionPulse();
         WatchUi.requestUpdate();
     }
