@@ -27,9 +27,7 @@ class SecondScreenView extends WatchUi.View {
         var cy = h / 2;
         var circleRadius = (w < h ? w : h) / 2;
 
-        var entries = _store.load();
-        var diapers = _collectDiaperEntries(entries);
-        _sortDiapersByTsDesc(diapers);
+        var diapers = _store.loadRecentDiapers();
         var diapersArr = diapers as Array;
 
         var mainRowText;
@@ -40,15 +38,16 @@ class SecondScreenView extends WatchUi.View {
             lower0 = "";
             lower1 = "";
         } else {
-            var latestTs = _fmt.entryTs(diapersArr[0]);
+            var latestIndex = diapersArr.size() - 1;
+            var latestTs = _fmt.entryTs(diapersArr[latestIndex]);
             mainRowText = _formatMainRowTimeFromTs(latestTs) + " - Diaper";
             if (diapersArr.size() >= 2) {
-                lower0 = "- " + _formatMainRowTimeFromTs(_fmt.entryTs(diapersArr[1])) + " -";
+                lower0 = "- " + _formatMainRowTimeFromTs(_fmt.entryTs(diapersArr[latestIndex - 1])) + " -";
             } else {
                 lower0 = "";
             }
             if (diapersArr.size() >= 3) {
-                lower1 = "- " + _formatMainRowTimeFromTs(_fmt.entryTs(diapersArr[2])) + " -";
+                lower1 = "- " + _formatMainRowTimeFromTs(_fmt.entryTs(diapersArr[latestIndex - 2])) + " -";
             } else {
                 lower1 = "";
             }
@@ -69,38 +68,6 @@ class SecondScreenView extends WatchUi.View {
         _drawLowerRows(dc, w, h, lower0, lower1);
 
         _screenDots.draw(dc, w, h, _screenIndex, highlightRowY);
-    }
-
-    function _collectDiaperEntries(entries) {
-        var diapers = [];
-        if (entries == null) {
-            return diapers;
-        }
-        var entriesArr = entries as Array;
-        for (var i = 0; i < entriesArr.size(); i++) {
-            var e = entriesArr[i];
-            var t = _fmt.entryType(e);
-            if (t != null && t == 4) {
-                diapers.add(e);
-            }
-        }
-        return diapers;
-    }
-
-    function _sortDiapersByTsDesc(diapers) {
-        var d = diapers as Array;
-        var n = d.size();
-        for (var i = 0; i < n; i++) {
-            for (var j = i + 1; j < n; j++) {
-                var ti = _fmt.entryTs(d[i]);
-                var tj = _fmt.entryTs(d[j]);
-                if (tj > ti) {
-                    var tmp = d[i];
-                    d[i] = d[j];
-                    d[j] = tmp;
-                }
-            }
-        }
     }
 
     function _drawTime(dc, screenWidth, screenHeight) {

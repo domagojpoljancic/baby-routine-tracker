@@ -87,8 +87,7 @@ class HelloGarminView extends WatchUi.View {
         var centerX = screenWidth / 2;
         var centerY = screenHeight / 2;
         var circleRadius = (screenWidth < screenHeight ? screenWidth : screenHeight) / 2;
-        var entries = _store.load();
-        entries = _fmt.filterFeedingEntries(entries);
+        var entries = _store.loadRecentFeedings();
         var entryList = entries as Array;
 
         // High-contrast base.

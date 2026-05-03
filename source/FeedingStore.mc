@@ -9,17 +9,27 @@ class FeedingStore {
 
     var STORAGE_KEY = "feedings_v1";
     var GLANCE_RECENT_KEY = "glance_recent_v1";
+    var RECENT_FEEDINGS_KEY = "recent_feedings_v1";
+    var RECENT_DIAPERS_KEY = "recent_diapers_v1";
 
     function load() {
         var list = Application.Storage.getValue(STORAGE_KEY);
 
         if (list == null) {
-            _storeGlanceRecent([]);
+            _storeRecentCaches([]);
             return [];
         }
 
-        _ensureGlanceRecent(list);
+        _ensureRecentCaches(list);
         return list;
+    }
+
+    function loadRecentFeedings() {
+        return _loadRecentCache(RECENT_FEEDINGS_KEY);
+    }
+
+    function loadRecentDiapers() {
+        return _loadRecentCache(RECENT_DIAPERS_KEY);
     }
 
     function append(typeCode) {
@@ -48,7 +58,7 @@ class FeedingStore {
 
         var updatedList = _insertEntryByTimestamp(list, entry, ts);
         Application.Storage.setValue(STORAGE_KEY, updatedList);
-        _storeGlanceRecent(updatedList);
+        _storeRecentCaches(updatedList);
     }
 
     function _insertEntryByTimestamp(list, entry, ts) {
@@ -57,6 +67,15 @@ class FeedingStore {
         var arr = list as Array;
         var n = arr.size();
         var i;
+
+        var lastTs = null;
+        if (n > 0) {
+            lastTs = _safeEntryTimestamp(arr[n - 1]);
+        }
+        if (n == 0 || lastTs == null || ts >= lastTs) {
+            arr.add(entry);
+            return arr;
+        }
 
         for (i = 0; i < n; i += 1) {
             var existing = arr[i];
@@ -73,23 +92,6 @@ class FeedingStore {
         }
 
         return out;
-    }
-
-    function _entryTimestamp(entry) {
-        if (entry == null) {
-            return null;
-        }
-
-        var d = entry as Dictionary;
-        var raw = d["ts"];
-        if (raw == null) {
-            raw = d[:ts];
-        }
-        if (raw == null) {
-            return null;
-        }
-
-        return raw.toNumber();
     }
 
     function _toNumberOrNull(value) {
@@ -138,15 +140,32 @@ class FeedingStore {
         return null;
     }
 
-    function _isValidEntryForGlance(entry) {
+    function _isValidEntryForRecent(entry) {
         return _safeEntryTimestamp(entry) != null && _safeEntryTypeCode(entry) != null;
     }
 
-    function _glanceScanLimit() {
+    function _recentScanLimit() {
         return 20;
     }
 
-    function _recentEntriesForGlance(list) {
+    function _entryMatchesRecentMode(entry, mode) {
+        var t = _safeEntryTypeCode(entry);
+        if (t == null) {
+            return false;
+        }
+
+        if (mode == 1) {
+            return t == 1 || t == 2 || t == 3;
+        }
+
+        if (mode == 2) {
+            return t == 4;
+        }
+
+        return true;
+    }
+
+    function _recentEntries(list, mode, maxCount) {
         var recent = [];
         if (list == null || !(list instanceof Array)) {
             return recent;
@@ -155,9 +174,9 @@ class FeedingStore {
         var arr = list as Array;
         var i = arr.size() - 1;
         var scanned = 0;
-        while (i >= 0 && scanned < _glanceScanLimit() && recent.size() < 2) {
+        while (i >= 0 && scanned < _recentScanLimit() && recent.size() < maxCount) {
             var entry = arr[i];
-            if (_isValidEntryForGlance(entry)) {
+            if (_isValidEntryForRecent(entry) && _entryMatchesRecentMode(entry, mode)) {
                 recent.add({
                     "t" => _safeEntryTypeCode(entry),
                     "ts" => _safeEntryTimestamp(entry)
@@ -167,25 +186,61 @@ class FeedingStore {
             i -= 1;
         }
 
-        if (recent.size() == 2) {
-            return [recent[1], recent[0]];
+        var ordered = [];
+        for (i = recent.size() - 1; i >= 0; i -= 1) {
+            ordered.add(recent[i]);
         }
 
-        return recent;
+        return ordered;
     }
 
-    function _storeGlanceRecent(list) {
+    function _setRecentCache(key, entries) {
         try {
-            Application.Storage.setValue(GLANCE_RECENT_KEY, _recentEntriesForGlance(list));
+            Application.Storage.setValue(key, entries);
         } catch (ex) {
         }
     }
 
-    function _ensureGlanceRecent(list) {
+    function _storeRecentCaches(list) {
+        _setRecentCache(GLANCE_RECENT_KEY, _recentEntries(list, 0, 2));
+        _setRecentCache(RECENT_FEEDINGS_KEY, _recentEntries(list, 1, 3));
+        _setRecentCache(RECENT_DIAPERS_KEY, _recentEntries(list, 2, 3));
+    }
+
+    function _ensureRecentCaches(list) {
         var recent = Application.Storage.getValue(GLANCE_RECENT_KEY);
-        if (recent == null || !(recent instanceof Array)) {
-            _storeGlanceRecent(list);
+        var feedings = Application.Storage.getValue(RECENT_FEEDINGS_KEY);
+        var diapers = Application.Storage.getValue(RECENT_DIAPERS_KEY);
+        if (recent == null || !(recent instanceof Array) ||
+            feedings == null || !(feedings instanceof Array) ||
+            diapers == null || !(diapers instanceof Array)) {
+            _storeRecentCaches(list);
         }
+    }
+
+    function _loadRecentCache(key) {
+        var recent = Application.Storage.getValue(key);
+        if (recent != null && recent instanceof Array) {
+            return recent;
+        }
+
+        _backfillRecentCachesFromHistory();
+        recent = Application.Storage.getValue(key);
+        if (recent != null && recent instanceof Array) {
+            return recent;
+        }
+
+        return [];
+    }
+
+    function _backfillRecentCachesFromHistory() {
+        var list = Application.Storage.getValue(STORAGE_KEY);
+        if (list == null || !(list instanceof Array)) {
+            _storeRecentCaches([]);
+            return;
+        }
+
+        _storeRecentCaches(list);
     }
 
     function _isValidTypeCode(typeCode) {
@@ -214,25 +269,8 @@ class FeedingStore {
 
         var newList = list.slice(0, list.size() - 1);
         Application.Storage.setValue(STORAGE_KEY, newList);
-        _storeGlanceRecent(newList);
+        _storeRecentCaches(newList);
         return true;
-    }
-
-    function _entryTypeCode(entry) {
-        if (entry == null) {
-            return null;
-        }
-
-        var d = entry as Dictionary;
-        var v = d["t"];
-        if (v == null) {
-            v = d[:t];
-        }
-        if (v == null) {
-            return null;
-        }
-
-        return v.toNumber();
     }
 
     // screen 1: remove newest t in {1,2,3}. screen 2: remove newest t==4. screen 3: no-op.
@@ -271,7 +309,7 @@ class FeedingStore {
                     }
                 }
                 Application.Storage.setValue(STORAGE_KEY, newList);
-                _storeGlanceRecent(newList);
+                _storeRecentCaches(newList);
                 return true;
             }
         }
@@ -281,6 +319,6 @@ class FeedingStore {
 
     function clearAll() {
         Application.Storage.setValue(STORAGE_KEY, []);
-        _storeGlanceRecent([]);
+        _storeRecentCaches([]);
     }
 }
