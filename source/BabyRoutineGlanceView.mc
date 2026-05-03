@@ -5,7 +5,7 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
-// Glance-only: reads feedings_v1 via Application.Storage (same key/schema as FeedingStore).
+// Glance-only: reads the tiny recent-entry cache maintained by FeedingStore.
 // No app classes — they are not loaded in the Glance execution context.
 (:glance)
 class BabyRoutineGlanceView extends WatchUi.GlanceView {
@@ -15,7 +15,7 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
     }
 
     function _maxEntriesToScan() {
-        return 20;
+        return 2;
     }
 
     function _toNumberOrNull(value) {
@@ -184,7 +184,7 @@ class BabyRoutineGlanceView extends WatchUi.GlanceView {
         var titleText = "Baby Routine";
         var titleFont = Graphics.FONT_XTINY;
 
-        var lines = _recentValidGlanceLines(Application.Storage.getValue("feedings_v1"));
+        var lines = _recentValidGlanceLines(Application.Storage.getValue("glance_recent_v1"));
         var line1 = null;
         var line2 = null;
         var lineCount = lines.size();

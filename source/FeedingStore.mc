@@ -8,14 +8,17 @@ import Toybox.Time;
 class FeedingStore {
 
     var STORAGE_KEY = "feedings_v1";
+    var GLANCE_RECENT_KEY = "glance_recent_v1";
 
     function load() {
         var list = Application.Storage.getValue(STORAGE_KEY);
 
         if (list == null) {
+            _storeGlanceRecent([]);
             return [];
         }
 
+        _ensureGlanceRecent(list);
         return list;
     }
 
@@ -43,7 +46,9 @@ class FeedingStore {
             "ts" => ts
         };
 
-        Application.Storage.setValue(STORAGE_KEY, _insertEntryByTimestamp(list, entry, ts));
+        var updatedList = _insertEntryByTimestamp(list, entry, ts);
+        Application.Storage.setValue(STORAGE_KEY, updatedList);
+        _storeGlanceRecent(updatedList);
     }
 
     function _insertEntryByTimestamp(list, entry, ts) {
@@ -55,7 +60,7 @@ class FeedingStore {
 
         for (i = 0; i < n; i += 1) {
             var existing = arr[i];
-            var existingTs = _entryTimestamp(existing);
+            var existingTs = _safeEntryTimestamp(existing);
             if (!inserted && existingTs != null && ts < existingTs) {
                 out.add(entry);
                 inserted = true;
@@ -87,6 +92,102 @@ class FeedingStore {
         return raw.toNumber();
     }
 
+    function _toNumberOrNull(value) {
+        if (value == null || !(value has :toNumber)) {
+            return null;
+        }
+
+        return value.toNumber();
+    }
+
+    function _safeEntryTimestamp(entry) {
+        if (entry == null || !(entry instanceof Dictionary)) {
+            return null;
+        }
+
+        var d = entry as Dictionary;
+        var raw = d["ts"];
+        if (raw == null) {
+            raw = d[:ts];
+        }
+
+        var ts = _toNumberOrNull(raw);
+        if (ts == null || ts <= 0) {
+            return null;
+        }
+
+        return ts;
+    }
+
+    function _safeEntryTypeCode(entry) {
+        if (entry == null || !(entry instanceof Dictionary)) {
+            return null;
+        }
+
+        var d = entry as Dictionary;
+        var v = d["t"];
+        if (v == null) {
+            v = d[:t];
+        }
+
+        var n = _toNumberOrNull(v);
+        if (n == 1 || n == 2 || n == 3 || n == 4) {
+            return n;
+        }
+
+        return null;
+    }
+
+    function _isValidEntryForGlance(entry) {
+        return _safeEntryTimestamp(entry) != null && _safeEntryTypeCode(entry) != null;
+    }
+
+    function _glanceScanLimit() {
+        return 20;
+    }
+
+    function _recentEntriesForGlance(list) {
+        var recent = [];
+        if (list == null || !(list instanceof Array)) {
+            return recent;
+        }
+
+        var arr = list as Array;
+        var i = arr.size() - 1;
+        var scanned = 0;
+        while (i >= 0 && scanned < _glanceScanLimit() && recent.size() < 2) {
+            var entry = arr[i];
+            if (_isValidEntryForGlance(entry)) {
+                recent.add({
+                    "t" => _safeEntryTypeCode(entry),
+                    "ts" => _safeEntryTimestamp(entry)
+                });
+            }
+            scanned += 1;
+            i -= 1;
+        }
+
+        if (recent.size() == 2) {
+            return [recent[1], recent[0]];
+        }
+
+        return recent;
+    }
+
+    function _storeGlanceRecent(list) {
+        try {
+            Application.Storage.setValue(GLANCE_RECENT_KEY, _recentEntriesForGlance(list));
+        } catch (ex) {
+        }
+    }
+
+    function _ensureGlanceRecent(list) {
+        var recent = Application.Storage.getValue(GLANCE_RECENT_KEY);
+        if (recent == null || !(recent instanceof Array)) {
+            _storeGlanceRecent(list);
+        }
+    }
+
     function _isValidTypeCode(typeCode) {
         if (typeCode == null) {
             return false;
@@ -113,6 +214,7 @@ class FeedingStore {
 
         var newList = list.slice(0, list.size() - 1);
         Application.Storage.setValue(STORAGE_KEY, newList);
+        _storeGlanceRecent(newList);
         return true;
     }
 
@@ -148,7 +250,7 @@ class FeedingStore {
         var listSz = listArr.size();
         var i;
         for (i = listSz - 1; i >= 0; i -= 1) {
-            var t = _entryTypeCode(listArr[i]);
+            var t = _safeEntryTypeCode(listArr[i]);
             if (t == null) {
                 continue;
             }
@@ -169,6 +271,7 @@ class FeedingStore {
                     }
                 }
                 Application.Storage.setValue(STORAGE_KEY, newList);
+                _storeGlanceRecent(newList);
                 return true;
             }
         }
@@ -178,5 +281,6 @@ class FeedingStore {
 
     function clearAll() {
         Application.Storage.setValue(STORAGE_KEY, []);
+        _storeGlanceRecent([]);
     }
 }
