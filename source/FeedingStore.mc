@@ -14,15 +14,112 @@ class FeedingStore {
     var RECENT_CACHE_VERSION_KEY = "recent_cache_version_v1";
     var RECENT_CACHE_VERSION = 2;
 
-    function load() {
+    hidden static var _memList = null;
+    hidden static var _memReady = false;
+
+    function _readListFromStorage() {
         var list = Application.Storage.getValue(STORAGE_KEY);
+        if (list == null) {
+            _memList = [];
+            _memReady = true;
+            return _memList;
+        }
+
+        _memList = list;
+        _memReady = true;
+        return list;
+    }
+
+    function _cacheEntryEquals(a, b) {
+        if (a == null || b == null) {
+            return false;
+        }
+
+        return _safeEntryTimestamp(a) == _safeEntryTimestamp(b) &&
+            _safeEntryTypeCode(a) == _safeEntryTypeCode(b);
+    }
+
+    function _appendNewestToCache(list, entry, maxCount, mode) {
+        if (!_isValidEntryForRecent(entry) || !_entryMatchesRecentMode(entry, mode)) {
+            return list;
+        }
+
+        if (list == null || !(list instanceof Array)) {
+            return [entry];
+        }
+
+        var arr = list as Array;
+        if (arr.size() > 0 && _cacheEntryEquals(arr[arr.size() - 1], entry)) {
+            return list;
+        }
+
+        var newTs = _safeEntryTimestamp(entry);
+        var out = [];
+        var inserted = false;
+        var i;
+        for (i = 0; i < arr.size(); i += 1) {
+            var e = arr[i];
+            if (!inserted && _safeEntryTimestamp(e) != null && newTs < _safeEntryTimestamp(e)) {
+                out.add(entry);
+                inserted = true;
+            }
+            out.add(e);
+        }
+
+        if (!inserted) {
+            out.add(entry);
+        }
+
+        while (out.size() > maxCount) {
+            out = out.slice(1, out.size());
+        }
+
+        return out;
+    }
+
+    function _updateRecentCachesAfterAppend(entry) {
+        var glance = Application.Storage.getValue(GLANCE_RECENT_KEY);
+        if (glance == null || !(glance instanceof Array)) {
+            glance = [];
+        }
+        glance = _appendNewestToCache(glance, entry, 2, 0);
+
+        var feedings = Application.Storage.getValue(RECENT_FEEDINGS_KEY);
+        if (feedings == null || !(feedings instanceof Array)) {
+            feedings = [];
+        }
+        feedings = _appendNewestToCache(feedings, entry, 3, 1);
+
+        var diapers = Application.Storage.getValue(RECENT_DIAPERS_KEY);
+        if (diapers == null || !(diapers instanceof Array)) {
+            diapers = [];
+        }
+        diapers = _appendNewestToCache(diapers, entry, 3, 2);
+
+        _setRecentCache(GLANCE_RECENT_KEY, glance);
+        _setRecentCache(RECENT_FEEDINGS_KEY, feedings);
+        _setRecentCache(RECENT_DIAPERS_KEY, diapers);
+        _setRecentCache(RECENT_CACHE_VERSION_KEY, RECENT_CACHE_VERSION);
+    }
+
+    function load(ensureCaches) {
+        var list = null;
+        if (!ensureCaches && _memReady && _memList != null) {
+            list = _memList;
+        } else {
+            list = _readListFromStorage();
+        }
 
         if (list == null) {
             _storeRecentCaches([]);
+            _memList = [];
+            _memReady = true;
             return [];
         }
 
-        _ensureRecentCaches(list);
+        if (ensureCaches) {
+            _ensureRecentCaches(list);
+        }
         return list;
     }
 
@@ -43,7 +140,7 @@ class FeedingStore {
             return false;
         }
 
-        var list = load();
+        var list = load(false);
         if (list == null) {
             list = [];
         }
@@ -60,7 +157,9 @@ class FeedingStore {
 
         var updatedList = _insertEntryByTimestamp(list, entry, ts);
         Application.Storage.setValue(STORAGE_KEY, updatedList);
-        _storeRecentCaches(updatedList);
+        _memList = updatedList;
+        _memReady = true;
+        _updateRecentCachesAfterAppend(entry);
     }
 
     function _insertEntryByTimestamp(list, entry, ts) {
@@ -281,20 +380,22 @@ class FeedingStore {
     }
 
     function undoLast() {
-        var list = load();
+        var list = load(true);
         if (list == null || list.size() == 0) {
             return false;
         }
 
         var newList = list.slice(0, list.size() - 1);
         Application.Storage.setValue(STORAGE_KEY, newList);
+        _memList = newList;
+        _memReady = true;
         _storeRecentCaches(newList);
         return true;
     }
 
     // screen 1: remove newest t in {1,2,3}. screen 2: remove newest t==4. screen 3: no-op.
     function undoLastForScreen(screen) {
-        var list = load();
+        var list = load(true);
         if (list == null || list.size() == 0) {
             return false;
         }
@@ -328,6 +429,8 @@ class FeedingStore {
                     }
                 }
                 Application.Storage.setValue(STORAGE_KEY, newList);
+                _memList = newList;
+                _memReady = true;
                 _storeRecentCaches(newList);
                 return true;
             }
@@ -338,6 +441,8 @@ class FeedingStore {
 
     function clearAll() {
         Application.Storage.setValue(STORAGE_KEY, []);
+        _memList = [];
+        _memReady = true;
         _storeRecentCaches([]);
     }
 }

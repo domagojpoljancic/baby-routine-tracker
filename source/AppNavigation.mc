@@ -53,8 +53,8 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
         if (_screen == 1) {
             var result = new FeedingTouchLayout().hitCircle(x, y, ds.screenWidth, h);
             if (result != null) {
-                (new FeedingActions()).completeCircleTap(result);
                 HapticHelper.subtleActionPulse();
+                (new FeedingActions()).completeCircleTap(result);
                 return true;
             }
             if (_isBottomHalfTap(y, h)) {
@@ -67,8 +67,8 @@ class CircularNavDelegate extends WatchUi.BehaviorDelegate {
 
         if (_screen == 2) {
             if (new DiaperTouchLayout().hitDiaperButton(x, y, ds.screenWidth, h)) {
-                (new DiaperActions()).completeAddDiaper();
                 HapticHelper.subtleActionPulse();
+                (new DiaperActions()).completeAddDiaper();
                 return true;
             }
             if (_isBottomHalfTap(y, h)) {

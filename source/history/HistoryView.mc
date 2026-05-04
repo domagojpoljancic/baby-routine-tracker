@@ -22,7 +22,7 @@ class HistoryView {
 
         var menu = new WatchUi.CustomMenu(menuHeight, Graphics.COLOR_BLACK, {});
         var store = new FeedingStore();
-        var feedings = store.load();
+        var feedings = store.load(true);
         if (feedings == null) {
             feedings = [];
         }
