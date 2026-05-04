@@ -11,6 +11,8 @@ class FeedingStore {
     var GLANCE_RECENT_KEY = "glance_recent_v1";
     var RECENT_FEEDINGS_KEY = "recent_feedings_v1";
     var RECENT_DIAPERS_KEY = "recent_diapers_v1";
+    var RECENT_CACHE_VERSION_KEY = "recent_cache_version_v1";
+    var RECENT_CACHE_VERSION = 2;
 
     function load() {
         var list = Application.Storage.getValue(STORAGE_KEY);
@@ -69,10 +71,20 @@ class FeedingStore {
         var i;
 
         var lastTs = null;
+        var lastIndex = -1;
         if (n > 0) {
-            lastTs = _safeEntryTimestamp(arr[n - 1]);
+            var j = n - 1;
+            while (j >= 0) {
+                var candidateTs = _safeEntryTimestamp(arr[j]);
+                if (candidateTs != null) {
+                    lastTs = candidateTs;
+                    lastIndex = j;
+                    break;
+                }
+                j -= 1;
+            }
         }
-        if (n == 0 || lastTs == null || ts >= lastTs) {
+        if (n == 0 || lastTs == null || (lastIndex == n - 1 && ts >= lastTs)) {
             arr.add(entry);
             return arr;
         }
@@ -144,10 +156,6 @@ class FeedingStore {
         return _safeEntryTimestamp(entry) != null && _safeEntryTypeCode(entry) != null;
     }
 
-    function _recentScanLimit() {
-        return 20;
-    }
-
     function _entryMatchesRecentMode(entry, mode) {
         var t = _safeEntryTypeCode(entry);
         if (t == null) {
@@ -173,8 +181,7 @@ class FeedingStore {
 
         var arr = list as Array;
         var i = arr.size() - 1;
-        var scanned = 0;
-        while (i >= 0 && scanned < _recentScanLimit() && recent.size() < maxCount) {
+        while (i >= 0 && recent.size() < maxCount) {
             var entry = arr[i];
             if (_isValidEntryForRecent(entry) && _entryMatchesRecentMode(entry, mode)) {
                 recent.add({
@@ -182,7 +189,6 @@ class FeedingStore {
                     "ts" => _safeEntryTimestamp(entry)
                 });
             }
-            scanned += 1;
             i -= 1;
         }
 
@@ -205,13 +211,16 @@ class FeedingStore {
         _setRecentCache(GLANCE_RECENT_KEY, _recentEntries(list, 0, 2));
         _setRecentCache(RECENT_FEEDINGS_KEY, _recentEntries(list, 1, 3));
         _setRecentCache(RECENT_DIAPERS_KEY, _recentEntries(list, 2, 3));
+        _setRecentCache(RECENT_CACHE_VERSION_KEY, RECENT_CACHE_VERSION);
     }
 
     function _ensureRecentCaches(list) {
+        var version = Application.Storage.getValue(RECENT_CACHE_VERSION_KEY);
         var recent = Application.Storage.getValue(GLANCE_RECENT_KEY);
         var feedings = Application.Storage.getValue(RECENT_FEEDINGS_KEY);
         var diapers = Application.Storage.getValue(RECENT_DIAPERS_KEY);
-        if (recent == null || !(recent instanceof Array) ||
+        if (version != RECENT_CACHE_VERSION ||
+            recent == null || !(recent instanceof Array) ||
             feedings == null || !(feedings instanceof Array) ||
             diapers == null || !(diapers instanceof Array)) {
             _storeRecentCaches(list);
@@ -219,6 +228,11 @@ class FeedingStore {
     }
 
     function _loadRecentCache(key) {
+        var version = Application.Storage.getValue(RECENT_CACHE_VERSION_KEY);
+        if (version != RECENT_CACHE_VERSION) {
+            _backfillRecentCachesFromHistory();
+        }
+
         var recent = Application.Storage.getValue(key);
         if (recent != null && recent instanceof Array) {
             return recent;
@@ -236,6 +250,11 @@ class FeedingStore {
     function _backfillRecentCachesFromHistory() {
         var list = Application.Storage.getValue(STORAGE_KEY);
         if (list == null || !(list instanceof Array)) {
+            _storeRecentCaches([]);
+            return;
+        }
+
+        if ((list as Array).size() == 0) {
             _storeRecentCaches([]);
             return;
         }
