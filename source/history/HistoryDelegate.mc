@@ -8,6 +8,14 @@ class HistoryDelegate extends WatchUi.Menu2InputDelegate {
     }
 
     function onSelect(item) {
+        if (item instanceof HistoryLoadMoreMenuItem) {
+            WatchUi.pushView(
+                HistoryView.buildFull(item.getHistoryMode()),
+                new HistoryDelegate(),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+            return;
+        }
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 }

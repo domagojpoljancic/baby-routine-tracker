@@ -104,7 +104,9 @@ class FeedingStore {
 
     function load(ensureCaches) {
         var list = null;
-        if (!ensureCaches && _memReady && _memList != null) {
+        // History and undo paths use load(true) for cache coherence; still prefer the
+        // in-memory list when warm so opening History does not deserialize storage again.
+        if (_memReady && _memList != null) {
             list = _memList;
         } else {
             list = _readListFromStorage();

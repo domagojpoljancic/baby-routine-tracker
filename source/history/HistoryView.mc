@@ -4,22 +4,24 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
+// Default history window: local calendar days including today (reduces menu build cost).
+const HISTORY_WINDOW_DAYS = 7;
+
 // Builds a scrollable CustomMenu of grouped feeding history (newest first).
 class HistoryView {
 
     // mode: :feedingOnly (default) = t in {1,2,3}; :diaperOnly = t==4; :all = no type filter.
+    // Opens a rolling window of the last HISTORY_WINDOW_DAYS; use buildFull for the entire list.
     static function build(mode) {
-        var ds = System.getDeviceSettings();
-        var menuHeight;
-        if (ds.screenHeight < 250) {
-            menuHeight = ds.screenHeight * 15 / 100;
-        } else {
-            menuHeight = ds.screenHeight * 12 / 100;
-        }
-        if (menuHeight < 44) {
-            menuHeight = 44;
-        }
+        return _build(mode, HISTORY_WINDOW_DAYS);
+    }
 
+    static function buildFull(mode) {
+        return _build(mode, null);
+    }
+
+    static function _build(mode, windowDaysOrNull) {
+        var menuHeight = HistoryView._computeMenuRowHeight();
         var menu = new WatchUi.CustomMenu(menuHeight, Graphics.COLOR_BLACK, {});
         var store = new FeedingStore();
         var feedings = store.load(true);
@@ -39,20 +41,30 @@ class HistoryView {
             feedings = (new FeedingFormatters()).filterFeedingEntries(feedings);
         }
 
+        var fmt = new FeedingFormatters();
+        var minTs = null;
+        var hasOlderOutsideWindow = false;
+        if (windowDaysOrNull != null && windowDaysOrNull > 0) {
+            minTs = Time.today().value() -
+                (windowDaysOrNull.toNumber() - 1) * Time.Gregorian.SECONDS_PER_DAY;
+            hasOlderOutsideWindow = HistoryView._hasEntryBeforeMinTs(feedings, minTs, fmt);
+            feedings = HistoryView._entriesOnOrAfterMinTs(feedings, minTs, fmt);
+        }
+
         var ordered = HistoryView._newestFirstOrder(feedings) as Array;
         if (ordered.size() == 0) {
-            if (mode == :diaperOnly) {
-                menu.addItem(new HistoryEmptyItem("No diapers yet"));
-            } else if (mode == :all) {
-                menu.addItem(new HistoryEmptyItem("No entries yet"));
-            } else {
-                menu.addItem(new HistoryEmptyItem(null));
+            if (windowDaysOrNull != null && windowDaysOrNull > 0 && hasOlderOutsideWindow) {
+                menu.addItem(new HistoryEmptyItem(
+                    "No entries in last " + windowDaysOrNull.toNumber().toString() + " days"
+                ));
+                menu.addItem(new HistoryLoadMoreMenuItem(mode));
+                return menu;
             }
+            menu.addItem(new HistoryEmptyItem(HistoryView._emptyMessageForMode(mode)));
             return menu;
         }
 
         var prevDayKey = -1;
-        var fmt = new FeedingFormatters();
         var i;
         var ordSize = ordered.size();
         for (i = 0; i < ordSize; i += 1) {
@@ -76,7 +88,68 @@ class HistoryView {
             menu.addItem(new HistoryItem(entry, normalizedTs));
         }
 
+        if (windowDaysOrNull != null && windowDaysOrNull > 0 && hasOlderOutsideWindow) {
+            menu.addItem(new HistoryLoadMoreMenuItem(mode));
+        }
+
         return menu;
+    }
+
+    static function _emptyMessageForMode(mode) {
+        if (mode == :diaperOnly) {
+            return "No diapers yet";
+        }
+        if (mode == :all) {
+            return "No entries yet";
+        }
+        return null;
+    }
+
+    static function _computeMenuRowHeight() {
+        var ds = System.getDeviceSettings();
+        var menuHeight;
+        if (ds.screenHeight < 250) {
+            menuHeight = ds.screenHeight * 15 / 100;
+        } else {
+            menuHeight = ds.screenHeight * 12 / 100;
+        }
+        if (menuHeight < 44) {
+            menuHeight = 44;
+        }
+        return menuHeight;
+    }
+
+    static function _hasEntryBeforeMinTs(entries, minTs, fmt) {
+        if (entries == null || !(entries instanceof Array) || minTs == null) {
+            return false;
+        }
+
+        var arr = entries as Array;
+        var i;
+        for (i = 0; i < arr.size(); i += 1) {
+            var ts = fmt.entryTs(arr[i]);
+            if (ts != null && ts < minTs) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static function _entriesOnOrAfterMinTs(entries, minTs, fmt) {
+        if (entries == null || !(entries instanceof Array) || minTs == null) {
+            return [];
+        }
+
+        var out = [];
+        var arr = entries as Array;
+        var i;
+        for (i = 0; i < arr.size(); i += 1) {
+            var ts = fmt.entryTs(arr[i]);
+            if (ts != null && ts >= minTs) {
+                out.add(arr[i]);
+            }
+        }
+        return out;
     }
 
     static function _newestFirstOrder(feedings) {
@@ -154,6 +227,38 @@ class HistoryEmptyItem extends WatchUi.CustomMenuItem {
             2 + fh / 2,
             Graphics.FONT_SMALL,
             _message,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+    }
+}
+
+// Footer row: opens full history (all stored entries for this mode).
+class HistoryLoadMoreMenuItem extends WatchUi.CustomMenuItem {
+
+    var _mode;
+
+    function initialize(historyMode) {
+        CustomMenuItem.initialize(null, {});
+        _mode = historyMode;
+    }
+
+    function getHistoryMode() {
+        return _mode;
+    }
+
+    function draw(dc) {
+        var w = dc.getWidth();
+        var cx = w / 2;
+        var font = Graphics.FONT_SMALL;
+        var fh = dc.getFontHeight(font);
+        var ty = 2 + fh / 2;
+
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            cx,
+            ty,
+            font,
+            "Older entries…",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
